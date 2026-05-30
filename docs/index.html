@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="LanChat CLI - 基于TCP/TLS的局域网聊天室命令行程序，支持群聊私聊、文件传输与断点续传">
+    <meta name="keywords" content="聊天室, CLI工具, TypeScript, Node.js, TCP, TLS, 局域网">
+    <title>LanChat CLI - 局域网聊天室</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="LanChat CLI - 局域网聊天室">
+    <meta property="og:description" content="基于TCP/TLS的局域网聊天室命令行程序，支持群聊私聊、文件传输与断点续传">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="zh_CN">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="LanChat CLI - 局域网聊天室">
+    <meta name="twitter:description" content="基于TCP/TLS的局域网聊天室命令行程序">
+    
+    <style>
+        :root {
+            --primary: #0066cc;
+            --primary-dark: #0052a3;
+            --bg: #f5f7fa;
+            --white: #ffffff;
+            --text: #24292e;
+            --text-secondary: #586069;
+            --border: #e1e4e8;
+            --code-bg: #f6f8fa;
+            --success: #28a745;
+            --warning: #f0ad4e;
+            --purple: #6f42c1;
+            --gradient-start: #667eea;
+            --gradient-end: #764ba2;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            z-index: 100;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 0 0 4px 0;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: var(--bg);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+            color: white;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .header .subtitle {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+        }
+
+        .badges {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.25);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
+        }
+
+        .card h2 {
+            color: var(--primary);
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .card h3 {
+            color: var(--text);
+            font-size: 1.1rem;
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .card p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .feature {
+            background: var(--code-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .feature:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature h4 {
+            color: var(--primary);
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature p {
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .code-block {
+            background: #1a1a2e;
+            color: #eee;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.875rem;
+            line-height: 1.7;
+            margin: 1rem 0;
+        }
+
+        .code-block .comment {
+            color: #6a9955;
+        }
+
+        .code-block .command {
+            color: #4ec9b0;
+        }
+
+        .code-block .string {
+            color: #ce9178;
+        }
+
+        .code-block .keyword {
+            color: #569cd6;
+        }
+
+        .commands-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .commands-table th,
+        .commands-table td {
+            padding: 0.875rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .commands-table th {
+            background: var(--code-bg);
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .commands-table code {
+            background: var(--code-bg);
+            color: #e83e8c;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: "SF Mono", Consolas, monospace;
+            font-size: 0.8rem;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .tech-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--code-bg);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .tech-item strong {
+            color: var(--primary);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 4rem;
+            padding: 2rem 0;
+            margin: 1rem 0;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat .number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: block;
+        }
+
+        .stat .label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .architecture {
+            background: var(--code-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .architecture pre {
+            font-family: "SF Mono", Consolas, monospace;
+            font-size: 0.8rem;
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        .architecture .dir {
+            color: var(--purple);
+            font-weight: 600;
+        }
+
+        .architecture .file {
+            color: var(--text);
+        }
+
+        .architecture .comment {
+            color: #6a9955;
+            font-style: italic;
+        }
+
+        .docs-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .docs-list li {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .docs-list li:last-child {
+            border-bottom: none;
+        }
+
+        .docs-list .icon {
+            font-size: 1.5rem;
+        }
+
+        .docs-list a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .docs-list a:hover {
+            text-decoration: underline;
+        }
+
+        .docs-list .desc {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-left: auto;
+        }
+
+        .quick-start {
+            background: linear-gradient(135deg, #e8f4f8 0%, #f0f7ff 100%);
+            border: 1px solid #b8daff;
+        }
+
+        .footer {
+            background: var(--text);
+            color: white;
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-top: 2rem;
+        }
+
+        .footer h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .footer .license {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 3rem 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 2rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .code-block {
+                font-size: 0.8rem;
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">跳过导航</a>
+    <header class="header">
+        <h1>LanChat CLI</h1>
+        <p class="subtitle">基于 TCP/TLS 的局域网聊天室命令行程序</p>
+        <div class="badges">
+            <span class="badge">TypeScript</span>
+            <span class="badge">Node.js 18+</span>
+            <span class="badge">TLS 1.3</span>
+            <span class="badge">SQLite</span>
+            <span class="badge">MIT License</span>
+        </div>
+    </header>
+
+    <main id="main-content" class="container">
+        <div class="stats">
+            <div class="stat">
+                <span class="number">28+</span>
+                <span class="label">消息类型</span>
+            </div>
+            <div class="stat">
+                <span class="number">TLS 1.3</span>
+                <span class="label">加密通信</span>
+            </div>
+            <div class="stat">
+                <span class="number">500MB</span>
+                <span class="label">文件传输</span>
+            </div>
+            <div class="stat">
+                <span class="number">100%</span>
+                <span class="label">开源</span>
+            </div>
+        </div>
+
+        <article class="card">
+            <h2>项目概述</h2>
+            <p>
+                LanChat CLI 是一个基于 TCP/TLS 通信协议的局域网聊天室命令行程序，采用客户端-服务器中心化架构设计。
+                项目提供全屏终端用户界面，支持群聊、私聊、房间管理、文件传输、在线用户列表、用户昵称修改等完整功能。
+            </p>
+            <p>
+                系统通过 TLS 加密通信、Argon2id 密码哈希与 JWT 令牌鉴权保障通信安全，
+                具备心跳检测、超时断开和断线重连能力，使用 SQLite 实现消息历史与用户数据的持久化存储。
+                架构上预留了去中心化（P2P）扩展接口。
+            </p>
+        </article>
+
+        <article class="card">
+            <h2>核心功能</h2>
+            <div class="features-grid">
+                <div class="feature">
+                    <h4>安全通信</h4>
+                    <p>TLS 1.2/1.3 加密、自签名 X.509 证书、Argon2id 密码哈希、JWT 令牌认证</p>
+                </div>
+                <div class="feature">
+                    <h4>聊天功能</h4>
+                    <p>房间群聊、点对点私聊、实时在线用户列表、消息历史记录存储与查询</p>
+                </div>
+                <div class="feature">
+                    <h4>文件传输</h4>
+                    <p>服务器中转模式、断点续传、最大 500MB 文件、传输进度实时显示</p>
+                </div>
+                <div class="feature">
+                    <h4>终端界面</h4>
+                    <p>基于 blessed 框架的全屏 TUI、多区域布局、彩色消息渲染、快捷键支持</p>
+                </div>
+                <div class="feature">
+                    <h4>连接可靠性</h4>
+                    <p>心跳检测（15秒间隔）、超时自动断开（10秒）、断线自动重连</p>
+                </div>
+                <div class="feature">
+                    <h4>数据持久化</h4>
+                    <p>SQLite 数据库、WAL 模式、历史消息自动推送（默认50条）</p>
+                </div>
+            </div>
+        </article>
+
+        <article class="card quick-start">
+            <h2>快速开始</h2>
+            
+            <h3>安装依赖</h3>
+            <div class="code-block">
+                <span class="comment"># 克隆项目</span><br>
+                git clone &lt;repository-url&gt;<br>
+                cd LanChat-CLI<br><br>
+                <span class="comment"># 安装依赖</span><br>
+                <span class="command">npm install</span>
+            </div>
+
+            <h3>生成 TLS 证书</h3>
+            <div class="code-block">
+                <span class="comment"># 创建证书目录</span><br>
+                mkdir -p certs<br><br>
+                <span class="comment"># 生成自签名证书（有效期10年）</span><br>
+                openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \<br>
+                &nbsp;&nbsp;-keyout certs/server.key \<br>
+                &nbsp;&nbsp;-out certs/server.crt \<br>
+                &nbsp;&nbsp;-subj "/CN=LanChat"
+            </div>
+
+            <h3>配置与编译</h3>
+            <div class="code-block">
+                <span class="comment"># 复制配置文件并编辑</span><br>
+                <span class="command">cp .env.example .env</span><br><br>
+                <span class="comment"># 编辑 .env，设置 JWT_SECRET（至少32字符）</span><br><br>
+                <span class="comment"># 编译项目</span><br>
+                <span class="command">npm run build</span>
+            </div>
+
+            <h3>启动服务</h3>
+            <div class="code-block">
+                <span class="comment"># 终端1 - 启动服务端</span><br>
+                <span class="command">npm run start:server</span><br><br>
+                <span class="comment"># 终端2 - 启动客户端</span><br>
+                <span class="command">npm run start:client</span>
+            </div>
+        </article>
+
+        <article class="card">
+            <h2>客户端命令</h2>
+            <table class="commands-table">
+                <thead>
+                    <tr>
+                        <th>命令</th>
+                        <th>说明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>/join #&lt;room&gt;</code></td>
+                        <td>加入或创建指定房间</td>
+                    </tr>
+                    <tr>
+                        <td><code>/leave</code></td>
+                        <td>离开当前房间</td>
+                    </tr>
+                    <tr>
+                        <td><code>/rooms</code></td>
+                        <td>列出所有房间及在线人数</td>
+                    </tr>
+                    <tr>
+                        <td><code>/msg &lt;nick&gt; &lt;message&gt;</code></td>
+                        <td>向指定用户发送私聊消息</td>
+                    </tr>
+                    <tr>
+                        <td><code>/nick &lt;newNick&gt;</code></td>
+                        <td>修改当前用户昵称</td>
+                    </tr>
+                    <tr>
+                        <td><code>/list</code></td>
+                        <td>刷新当前房间在线用户列表</td>
+                    </tr>
+                    <tr>
+                        <td><code>/history [count]</code></td>
+                        <td>拉取历史消息（默认50条，最大200条）</td>
+                    </tr>
+                    <tr>
+                        <td><code>/sendfile &lt;nick&gt; &lt;path&gt;</code></td>
+                        <td>向指定用户发送文件</td>
+                    </tr>
+                    <tr>
+                        <td><code>/quit</code></td>
+                        <td>优雅断开连接并退出程序</td>
+                    </tr>
+                </tbody>
+            </table>
+        </article>
+
+        <article class="card">
+            <h2>技术架构</h2>
+            <div class="architecture">
+                <pre>
+<span class="comment"># 项目目录结构</span>
+<span class="dir">src/</span>
+├── <span class="dir">shared/</span>              <span class="comment"># 共享模块</span>
+│   ├── <span class="dir">protocol/</span>           <span class="comment"># 协议定义、编解码器</span>
+│   ├── <span class="file">constants.ts</span>       <span class="comment"># 常量配置</span>
+│   ├── <span class="file">errors.ts</span>          <span class="comment"># 错误定义</span>
+│   └── <span class="file">validators.ts</span>      <span class="comment"># 输入校验</span>
+├── <span class="dir">server/</span>             <span class="comment"># 服务端</span>
+│   ├── <span class="dir">repositories/</span>      <span class="comment"># 数据访问层</span>
+│   ├── <span class="dir">services/</span>          <span class="comment"># 业务逻辑层</span>
+│   ├── <span class="file">TlsServer.ts</span>       <span class="comment"># TLS 服务器</span>
+│   ├── <span class="file">AuthManager.ts</span>     <span class="comment"># 认证管理</span>
+│   └── <span class="file">...</span>
+├── <span class="dir">client/</span>             <span class="comment"># 客户端</span>
+│   ├── <span class="dir">components/</span>         <span class="comment"># TUI 组件</span>
+│   ├── <span class="file">ChatClient.ts</span>      <span class="comment"># 核心客户端</span>
+│   └── <span class="file">...</span>
+└── <span class="dir">p2p/</span>                <span class="comment"># P2P 预留模块</span></pre>
+            </div>
+
+            <h3>技术栈</h3>
+            <div class="tech-stack">
+                <div class="tech-item">
+                    <strong>运行时</strong>
+                    <span>Node.js 18+ LTS</span>
+                </div>
+                <div class="tech-item">
+                    <strong>语言</strong>
+                    <span>TypeScript 5.x</span>
+                </div>
+                <div class="tech-item">
+                    <strong>通信</strong>
+                    <span>TCP / TLS 1.3</span>
+                </div>
+                <div class="tech-item">
+                    <strong>数据库</strong>
+                    <span>SQLite (WAL)</span>
+                </div>
+                <div class="tech-item">
+                    <strong>认证</strong>
+                    <span>JWT / Argon2id</span>
+                </div>
+                <div class="tech-item">
+                    <strong>界面</strong>
+                    <span>blessed TUI</span>
+                </div>
+            </div>
+        </article>
+
+        <article class="card">
+            <h2>相关文档</h2>
+            <ul class="docs-list">
+                <li>
+                    <span class="icon" aria-hidden="true">📄</span>
+                    <a href="protocol.html">通信协议文档</a>
+                    <span class="desc">完整的二进制协议定义与28种消息类型说明</span>
+                </li>
+                <li>
+                    <span class="icon" aria-hidden="true">📖</span>
+                    <a href="README.md">README 文档</a>
+                    <span class="desc">项目详细说明、安装部署与使用指南</span>
+                </li>
+                <li>
+                    <span class="icon" aria-hidden="true">📜</span>
+                    <a href="LICENSE">MIT 许可证</a>
+                    <span class="desc">开源许可协议</span>
+                </li>
+            </ul>
+        </article>
+    </main>
+
+    <footer class="footer">
+        <h3>LanChat CLI</h3>
+        <p>基于 TCP/TLS 的局域网聊天室命令行程序</p>
+        <p style="margin-top: 1rem;">
+            <a href="https://github.com/your-username/LanChat-CLI" aria-label="访问 LanChat CLI GitHub 仓库">GitHub 仓库</a>
+        </p>
+        <div class="license">
+            采用 MIT 许可证开源 | 版本 1.0.0
+        </div>
+    </footer>
+</body>
+</html>

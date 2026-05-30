@@ -9,7 +9,7 @@ logs/
 .DS_Store
 *.db-shm
 *.db-wal
-doc/设计文档.md
+docs/设计文档.md
 .trae/
 
 # 证书私钥
