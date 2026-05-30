@@ -1,0 +1,57 @@
+{
+  "name": "lanchat",
+  "version": "1.0.0",
+  "description": "局域网聊天室 CLI 程序 - 基于 TCP 的全屏终端聊天应用",
+  "main": "dist/server/index.js",
+  "bin": {
+    "lanchat-server": "dist/server/index.js",
+    "lanchat": "dist/client/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:server": "tsc -p tsconfig.server.json",
+    "build:client": "tsc -p tsconfig.client.json",
+    "start:server": "node dist/server/index.js",
+    "start:client": "node dist/client/index.js",
+    "dev:server": "ts-node src/server/index.ts",
+    "dev:client": "ts-node src/client/index.ts",
+    "test": "jest",
+    "lint": "eslint src --ext .ts"
+  },
+  "keywords": [
+    "chatroom",
+    "tcp",
+    "tls",
+    "cli",
+    "tui"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "argon2": "^0.31.2",
+    "better-sqlite3": "^9.4.3",
+    "blessed": "^0.1.81",
+    "dotenv": "^16.4.5",
+    "jsonwebtoken": "^9.0.2",
+    "uuid": "^9.0.1",
+    "winston": "^3.11.0"
+  },
+  "optionalDependencies": {
+    "argon2": "^0.31.2",
+    "better-sqlite3": "^9.4.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.9",
+    "@types/blessed": "^0.1.25",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.11.24",
+    "@types/uuid": "^9.0.8",
+    "@typescript-eslint/eslint-plugin": "^7.1.0",
+    "@typescript-eslint/parser": "^7.1.0",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
