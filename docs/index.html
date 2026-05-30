@@ -3,660 +3,1045 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="LanChat CLI - 基于TCP/TLS的局域网聊天室命令行程序，支持群聊私聊、文件传输与断点续传">
-    <meta name="keywords" content="聊天室, CLI工具, TypeScript, Node.js, TCP, TLS, 局域网">
-    <title>LanChat CLI - 局域网聊天室</title>
-    
+    <meta name="description" content="LanChat CLI - 基于 TCP/TLS 的局域网聊天室命令行程序，支持群聊、私聊、文件传输与断点续传">
+    <meta name="keywords" content="聊天室, CLI工具, TypeScript, Node.js, TCP, TLS, 局域网聊天, 终端应用">
+    <meta name="author" content="LanChat Team">
+    <title>LanChat CLI · 局域网聊天室</title>
+
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>">
     
     <!-- Open Graph -->
-    <meta property="og:title" content="LanChat CLI - 局域网聊天室">
-    <meta property="og:description" content="基于TCP/TLS的局域网聊天室命令行程序，支持群聊私聊、文件传输与断点续传">
+    <meta property="og:title" content="LanChat CLI · 局域网聊天室">
+    <meta property="og:description" content="基于 TCP/TLS 的全屏终端聊天应用，支持群聊、私聊、文件传输与断点续传">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="zh_CN">
     
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="LanChat CLI - 局域网聊天室">
-    <meta name="twitter:description" content="基于TCP/TLS的局域网聊天室命令行程序">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="LanChat CLI · 局域网聊天室">
+    <meta name="twitter:description" content="基于 TCP/TLS 的全屏终端聊天应用">
     
     <style>
-        :root {
-            --primary: #0066cc;
-            --primary-dark: #0052a3;
-            --bg: #f5f7fa;
-            --white: #ffffff;
-            --text: #24292e;
-            --text-secondary: #586069;
-            --border: #e1e4e8;
-            --code-bg: #f6f8fa;
-            --success: #28a745;
-            --warning: #f0ad4e;
-            --purple: #6f42c1;
-            --gradient-start: #667eea;
-            --gradient-end: #764ba2;
-        }
-
-        .skip-link {
-            position: absolute;
-            top: -40px;
-            left: 0;
-            background: var(--primary);
-            color: white;
-            padding: 8px 16px;
-            z-index: 100;
-            text-decoration: none;
-            font-weight: 600;
-            border-radius: 0 0 4px 0;
-        }
-
-        .skip-link:focus {
-            top: 0;
-        }
-
-        * {
+        /* ===== CSS Reset & Base ===== */
+        *, *::before, *::after {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+        }
+
+        :root {
+            --color-primary: #1e40af;
+            --color-primary-dark: #1e3a8a;
+            --color-primary-medium: #2563eb;
+            --color-primary-light: #3b82f6;
+            --color-accent: #0ea5e9;
+            --color-bg: #0a0f1a;
+            --color-bg-elevated: #0f1a2e;
+            --color-bg-card: #111c34;
+            --color-bg-soft: #0d1524;
+            --color-gray-900: #0f172a;
+            --color-gray-800: #1e293b;
+            --color-gray-700: #334155;
+            --color-gray-600: #475569;
+            --color-gray-500: #64748b;
+            --color-gray-400: #94a3b8;
+            --color-gray-300: #cbd5e1;
+            --color-gray-200: #e2e8f0;
+            --color-gray-100: #f1f5f9;
+            --color-text: #f8fafc;
+            --color-text-muted: #94a3b8;
+            --color-text-soft: #64748b;
+            --color-border: #2a3b5a;
+            --color-border-soft: #1e2b45;
+            --color-success: #22c55e;
+            --color-warning: #f59e0b;
+            --color-error: #ef4444;
+            --radius-sm: 0.375rem;
+            --radius-md: 0.625rem;
+            --radius-lg: 1rem;
+            --radius-xl: 1.25rem;
+            --radius-2xl: 1.75rem;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
+            --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.45);
+            --shadow-lg: 0 12px 28px -4px rgba(0, 0, 0, 0.55);
+            --shadow-glow-blue: 0 0 32px rgba(30, 64, 175, 0.4);
+            --shadow-glow-soft: 0 0 24px rgba(37, 99, 235, 0.25);
+            --transition-fast: 160ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-base: 240ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 360ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: var(--text);
-            background-color: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            line-height: 1.75;
+            letter-spacing: 0.01em;
+            color: var(--color-text);
+            background: var(--color-bg);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        .header {
-            background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+        /* Skip Link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 1rem;
+            background: var(--color-primary);
             color: white;
-            padding: 4rem 2rem;
+            padding: 0.75rem 1.25rem;
+            z-index: 1000;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            transition: top var(--transition-fast);
+        }
+
+        .skip-link:focus {
+            top: 1rem;
+            outline: 2px solid white;
+            outline-offset: 2px;
+        }
+
+        /* ===== Container ===== */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* ===== Header ===== */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 4rem 0 6rem;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at top, rgba(30, 64, 175, 0.18) 0%, transparent 55%),
+                radial-gradient(ellipse at bottom right, rgba(14, 165, 233, 0.12) 0%, transparent 45%);
+            pointer-events: none;
+        }
+
+        .hero-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(30, 64, 175, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(30, 64, 175, 0.04) 1px, transparent 1px);
+            background-size: 56px 56px;
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(30, 64, 175, 0.12);
+            border: 1px solid rgba(37, 99, 235, 0.35);
+            padding: 0.5rem 1.25rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--color-primary-light);
+            margin-bottom: 2rem;
+            letter-spacing: 0.03em;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .hero-badge-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--color-success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero-title {
+            font-size: clamp(2.75rem, 8vw, 5rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--color-gray-100) 0%, var(--color-primary-light) 45%, var(--color-accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 0.6s ease-out 0.1s both;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1.15rem, 3vw, 1.4rem);
+            color: var(--color-gray-400);
+            max-width: 640px;
+            margin: 0 auto 2.75rem;
+            line-height: 1.7;
+            letter-spacing: 0.01em;
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.6s ease-out 0.3s both;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.9rem 1.85rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: var(--radius-lg);
+            text-decoration: none;
+            transition: all var(--transition-base);
+            cursor: pointer;
+            border: none;
+            letter-spacing: 0.01em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-primary-medium) 0%, var(--color-primary-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 16px rgba(30, 64, 175, 0.35);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(30, 64, 175, 0.45);
+        }
+
+        .btn-secondary {
+            background: rgba(15, 26, 46, 0.6);
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(17, 28, 52, 0.9);
+            border-color: var(--color-primary-light);
+            transform: translateY(-2px);
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 2rem;
+            margin-top: 4.25rem;
+            padding-top: 4rem;
+            border-top: 1px solid var(--color-border-soft);
+            animation: fadeInUp 0.6s ease-out 0.4s both;
+        }
+
+        .stat-item {
             text-align: center;
         }
 
-        .header h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
+        .stat-number {
+            font-size: 2.6rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
             letter-spacing: -0.02em;
         }
 
-        .header .subtitle {
-            font-size: 1.25rem;
-            opacity: 0.9;
-            margin-bottom: 1.5rem;
+        .stat-label {
+            color: var(--color-gray-400);
+            font-size: 0.9rem;
+            margin-top: 0.4rem;
+            letter-spacing: 0.02em;
         }
 
-        .badges {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-top: 1.5rem;
+        /* ===== Sections ===== */
+        .section {
+            padding: 5rem 0;
         }
 
-        .badge {
-            background: rgba(255, 255, 255, 0.25);
-            padding: 0.4rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
+        .section-header {
+            text-align: center;
+            margin-bottom: 3.75rem;
         }
 
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        .card {
-            background: var(--white);
-            border-radius: 12px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--border);
-        }
-
-        .card h2 {
-            color: var(--primary);
-            font-size: 1.75rem;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 2px solid var(--border);
-        }
-
-        .card h3 {
-            color: var(--text);
-            font-size: 1.1rem;
-            margin: 1.5rem 0 0.75rem;
-        }
-
-        .card p {
-            color: var(--text-secondary);
+        .section-tag {
+            display: inline-block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--color-primary-light);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
             margin-bottom: 1rem;
         }
 
+        .section-title {
+            font-size: clamp(1.8rem, 4vw, 2.75rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+
+        .section-description {
+            color: var(--color-gray-400);
+            max-width: 620px;
+            margin: 0 auto;
+            font-size: 1.15rem;
+            line-height: 1.7;
+        }
+
+        /* Features */
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 1.5rem;
-            margin-top: 1rem;
         }
 
-        .feature {
-            background: var(--code-bg);
-            padding: 1.5rem;
-            border-radius: 8px;
-            border-left: 4px solid var(--primary);
-            transition: transform 0.2s, box-shadow 0.2s;
+        .feature-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-soft);
+            border-radius: var(--radius-xl);
+            padding: 2.1rem;
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
         }
 
-        .feature:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--color-primary-medium) 0%, var(--color-accent) 100%);
+            transform: scaleX(0);
+            transition: transform var(--transition-base);
         }
 
-        .feature h4 {
-            color: var(--primary);
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
+        .feature-card:hover {
+            border-color: var(--color-primary-light);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-glow-blue);
         }
 
-        .feature p {
-            font-size: 0.9rem;
-            margin: 0;
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-icon {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.22) 0%, rgba(14, 165, 233, 0.22) 100%);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.55rem;
+            margin-bottom: 1.35rem;
+        }
+
+        .feature-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 0.6rem;
+        }
+
+        .feature-description {
+            color: var(--color-gray-400);
+            font-size: 0.96rem;
+            line-height: 1.75;
+        }
+
+        /* Quick Start */
+        .quick-start {
+            background: var(--color-bg-card);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            border: 1px solid var(--color-border-soft);
+        }
+
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .step {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+
+        .step-content h3 {
+            font-size: 1.125rem;
+            margin-bottom: 0.75rem;
+            color: var(--color-text);
         }
 
         .code-block {
-            background: #1a1a2e;
-            color: #eee;
-            padding: 1.5rem;
-            border-radius: 8px;
+            background: #070c16;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 1.35rem;
+            margin-top: 0.85rem;
             overflow-x: auto;
-            font-family: "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+            font-family: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
             font-size: 0.875rem;
-            line-height: 1.7;
-            margin: 1rem 0;
+            line-height: 1.8;
+            position: relative;
         }
 
         .code-block .comment {
-            color: #6a9955;
+            color: var(--color-gray-500);
         }
 
         .code-block .command {
-            color: #4ec9b0;
+            color: var(--color-primary-light);
         }
 
         .code-block .string {
-            color: #ce9178;
+            color: #93c5fd;
         }
 
-        .code-block .keyword {
-            color: #569cd6;
+        /* Commands Table */
+        .commands-wrapper {
+            overflow-x: auto;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-border-soft);
+            background: var(--color-bg-card);
         }
 
         .commands-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 1rem;
+            min-width: 600px;
         }
 
         .commands-table th,
         .commands-table td {
-            padding: 0.875rem;
+            padding: 1.1rem 1.5rem;
             text-align: left;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--color-border-soft);
         }
 
         .commands-table th {
-            background: var(--code-bg);
-            color: var(--primary);
+            background: rgba(30, 64, 175, 0.08);
             font-weight: 600;
-            font-size: 0.9rem;
+            color: var(--color-primary-light);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .commands-table tbody tr:last-child td {
+            border-bottom: none;
         }
 
         .commands-table code {
-            background: var(--code-bg);
-            color: #e83e8c;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-family: "SF Mono", Consolas, monospace;
-            font-size: 0.8rem;
+            background: rgba(30, 64, 175, 0.15);
+            color: var(--color-primary-light);
+            padding: 0.25rem 0.625rem;
+            border-radius: var(--radius-sm);
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.86rem;
+        }
+
+        /* Architecture */
+        .architecture {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-soft);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            overflow-x: auto;
+        }
+
+        .architecture pre {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.88rem;
+            line-height: 1.85;
+            color: var(--color-gray-400);
+        }
+
+        .architecture .dir {
+            color: var(--color-primary-light);
+            font-weight: 600;
+        }
+
+        .architecture .comment {
+            color: var(--color-gray-500);
+            font-style: italic;
         }
 
         .tech-stack {
             display: flex;
             flex-wrap: wrap;
-            gap: 1rem;
-            margin-top: 1rem;
+            gap: 0.85rem;
+            margin-top: 2.1rem;
         }
 
         .tech-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: var(--code-bg);
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            font-size: 0.9rem;
+            background: rgba(30, 64, 175, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            padding: 0.65rem 1.35rem;
+            border-radius: 999px;
+            font-size: 0.88rem;
+            color: var(--color-primary-light);
+            transition: all var(--transition-fast);
         }
 
-        .tech-item strong {
-            color: var(--primary);
+        .tech-item:hover {
+            background: rgba(30, 64, 175, 0.18);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow-soft);
         }
 
-        .stats {
-            display: flex;
-            justify-content: center;
-            gap: 4rem;
-            padding: 2rem 0;
-            margin: 1rem 0;
-        }
-
-        .stat {
-            text-align: center;
-        }
-
-        .stat .number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--primary);
-            display: block;
-        }
-
-        .stat .label {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .architecture {
-            background: var(--code-bg);
-            padding: 1.5rem;
-            border-radius: 8px;
-            overflow-x: auto;
-        }
-
-        .architecture pre {
-            font-family: "SF Mono", Consolas, monospace;
-            font-size: 0.8rem;
-            line-height: 1.8;
-            margin: 0;
-        }
-
-        .architecture .dir {
-            color: var(--purple);
-            font-weight: 600;
-        }
-
-        .architecture .file {
-            color: var(--text);
-        }
-
-        .architecture .comment {
-            color: #6a9955;
-            font-style: italic;
-        }
-
+        /* Documentation Links */
         .docs-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
             list-style: none;
-            padding: 0;
         }
 
-        .docs-list li {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
+        .doc-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border-soft);
+            border-radius: var(--radius-xl);
+            padding: 1.85rem;
+            text-decoration: none;
+            color: inherit;
+            transition: all var(--transition-base);
             display: flex;
-            align-items: center;
-            gap: 0.75rem;
+            align-items: flex-start;
+            gap: 1.05rem;
         }
 
-        .docs-list li:last-child {
-            border-bottom: none;
+        .doc-card:hover {
+            border-color: var(--color-primary-light);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
         }
 
-        .docs-list .icon {
-            font-size: 1.5rem;
+        .doc-icon {
+            font-size: 1.85rem;
+            flex-shrink: 0;
         }
 
-        .docs-list a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 1rem;
+        .doc-info h4 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 0.55rem;
+            color: var(--color-text);
         }
 
-        .docs-list a:hover {
-            text-decoration: underline;
+        .doc-info p {
+            color: var(--color-gray-400);
+            font-size: 0.92rem;
+            line-height: 1.7;
         }
 
-        .docs-list .desc {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-left: auto;
-        }
-
-        .quick-start {
-            background: linear-gradient(135deg, #e8f4f8 0%, #f0f7ff 100%);
-            border: 1px solid #b8daff;
-        }
-
+        /* Footer */
         .footer {
-            background: var(--text);
-            color: white;
+            background: var(--color-bg-elevated);
+            border-top: 1px solid var(--color-border-soft);
+            padding: 3.25rem 0;
             text-align: center;
-            padding: 3rem 2rem;
-            margin-top: 2rem;
         }
 
-        .footer h3 {
-            font-size: 1.25rem;
-            margin-bottom: 1rem;
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
         }
 
-        .footer a {
-            color: #58a6ff;
+        .footer-link {
+            color: var(--color-gray-400);
             text-decoration: none;
+            transition: color var(--transition-fast);
         }
 
-        .footer a:hover {
-            text-decoration: underline;
+        .footer-link:hover {
+            color: var(--color-primary-light);
         }
 
-        .footer .license {
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 0.9rem;
-            opacity: 0.8;
+        .footer-divider {
+            color: var(--color-border);
         }
 
+        .footer-bottom {
+            color: var(--color-gray-500);
+            font-size: 0.875rem;
+        }
+
+        /* ===== Responsive ===== */
         @media (max-width: 768px) {
-            .header {
-                padding: 3rem 1.5rem;
-            }
-
-            .header h1 {
-                font-size: 2rem;
-            }
-
             .container {
-                padding: 1rem;
+                padding: 0 1rem;
             }
 
-            .card {
-                padding: 1.5rem;
+            .section {
+                padding: 3.5rem 0;
+            }
+
+            .hero {
+                min-height: auto;
+                padding: 3rem 0 4rem;
             }
 
             .stats {
-                flex-direction: column;
-                gap: 2rem;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+                padding-top: 2.5rem;
+                margin-top: 2.5rem;
+            }
+
+            .stat-number {
+                font-size: 2rem;
             }
 
             .features-grid {
                 grid-template-columns: 1fr;
             }
 
-            .code-block {
-                font-size: 0.8rem;
-                padding: 1rem;
+            .step {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .quick-start {
+                padding: 1.5rem;
+            }
+
+            .commands-table th,
+            .commands-table td {
+                padding: 0.75rem 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-cta {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
     <a href="#main-content" class="skip-link">跳过导航</a>
-    <header class="header">
-        <h1>LanChat CLI</h1>
-        <p class="subtitle">基于 TCP/TLS 的局域网聊天室命令行程序</p>
-        <div class="badges">
-            <span class="badge">TypeScript</span>
-            <span class="badge">Node.js 18+</span>
-            <span class="badge">TLS 1.3</span>
-            <span class="badge">SQLite</span>
-            <span class="badge">MIT License</span>
+    
+    <section class="hero">
+        <div class="hero-grid"></div>
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="hero-badge-dot"></span>
+                    <span>v1.0.0 · 安全稳定</span>
+                </div>
+                <h1 class="hero-title">LanChat CLI</h1>
+                <p class="hero-subtitle">
+                    基于 TCP/TLS 的全屏终端聊天应用，支持群聊、私聊、房间管理、
+                    文件传输与断点续传，拥有安全加密的通信保障。
+                </p>
+                <div class="hero-cta">
+                    <a href="#quick-start" class="btn btn-primary">
+                        <span>🚀</span>
+                        <span>快速开始</span>
+                    </a>
+                    <a href="https://github.com/your-username/LanChat-CLI" class="btn btn-secondary" aria-label="访问 LanChat CLI GitHub 仓库">
+                        <span>⭐</span>
+                        <span>GitHub</span>
+                    </a>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-number">28+</span>
+                        <span class="stat-label">消息类型</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">TLS 1.3</span>
+                        <span class="stat-label">加密通信</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">500MB</span>
+                        <span class="stat-label">文件传输</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">100%</span>
+                        <span class="stat-label">开源免费</span>
+                    </div>
+                </div>
+            </div>
         </div>
-    </header>
+    </section>
 
-    <main id="main-content" class="container">
-        <div class="stats">
-            <div class="stat">
-                <span class="number">28+</span>
-                <span class="label">消息类型</span>
-            </div>
-            <div class="stat">
-                <span class="number">TLS 1.3</span>
-                <span class="label">加密通信</span>
-            </div>
-            <div class="stat">
-                <span class="number">500MB</span>
-                <span class="label">文件传输</span>
-            </div>
-            <div class="stat">
-                <span class="number">100%</span>
-                <span class="label">开源</span>
-            </div>
-        </div>
-
-        <article class="card">
-            <h2>项目概述</h2>
-            <p>
-                LanChat CLI 是一个基于 TCP/TLS 通信协议的局域网聊天室命令行程序，采用客户端-服务器中心化架构设计。
-                项目提供全屏终端用户界面，支持群聊、私聊、房间管理、文件传输、在线用户列表、用户昵称修改等完整功能。
-            </p>
-            <p>
-                系统通过 TLS 加密通信、Argon2id 密码哈希与 JWT 令牌鉴权保障通信安全，
-                具备心跳检测、超时断开和断线重连能力，使用 SQLite 实现消息历史与用户数据的持久化存储。
-                架构上预留了去中心化（P2P）扩展接口。
-            </p>
-        </article>
-
-        <article class="card">
-            <h2>核心功能</h2>
-            <div class="features-grid">
-                <div class="feature">
-                    <h4>安全通信</h4>
-                    <p>TLS 1.2/1.3 加密、自签名 X.509 证书、Argon2id 密码哈希、JWT 令牌认证</p>
+    <main id="main-content">
+        <section class="section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-tag">功能特性</span>
+                    <h2 class="section-title">为什么选择 LanChat CLI?</h2>
+                    <p class="section-description">
+                        现代化的终端聊天体验，安全、高效、功能丰富
+                    </p>
                 </div>
-                <div class="feature">
-                    <h4>聊天功能</h4>
-                    <p>房间群聊、点对点私聊、实时在线用户列表、消息历史记录存储与查询</p>
-                </div>
-                <div class="feature">
-                    <h4>文件传输</h4>
-                    <p>服务器中转模式、断点续传、最大 500MB 文件、传输进度实时显示</p>
-                </div>
-                <div class="feature">
-                    <h4>终端界面</h4>
-                    <p>基于 blessed 框架的全屏 TUI、多区域布局、彩色消息渲染、快捷键支持</p>
-                </div>
-                <div class="feature">
-                    <h4>连接可靠性</h4>
-                    <p>心跳检测（15秒间隔）、超时自动断开（10秒）、断线自动重连</p>
-                </div>
-                <div class="feature">
-                    <h4>数据持久化</h4>
-                    <p>SQLite 数据库、WAL 模式、历史消息自动推送（默认50条）</p>
+                
+                <div class="features-grid">
+                    <article class="feature-card">
+                        <div class="feature-icon">🔐</div>
+                        <h3 class="feature-title">安全通信</h3>
+                        <p class="feature-description">
+                            TLS 1.2/1.3 加密，自签名 X.509 证书，Argon2id 密码哈希，JWT 令牌认证，全面保障通信安全。
+                        </p>
+                    </article>
+                    
+                    <article class="feature-card">
+                        <div class="feature-icon">💬</div>
+                        <h3 class="feature-title">聊天功能</h3>
+                        <p class="feature-description">
+                            房间群聊、点对点私聊、实时在线用户列表、消息历史记录存储与查询，支持用户昵称修改。
+                        </p>
+                    </article>
+                    
+                    <article class="feature-card">
+                        <div class="feature-icon">📁</div>
+                        <h3 class="feature-title">文件传输</h3>
+                        <p class="feature-description">
+                            服务器中转模式，支持断点续传，最大 500MB 文件，传输进度实时显示，文件元信息持久化。
+                        </p>
+                    </article>
+                    
+                    <article class="feature-card">
+                        <div class="feature-icon">🖥️</div>
+                        <h3 class="feature-title">终端界面</h3>
+                        <p class="feature-description">
+                            基于 blessed 框架的全屏 TUI，多区域布局，彩色消息渲染，支持键盘快捷键与鼠标操作。
+                        </p>
+                    </article>
+                    
+                    <article class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h3 class="feature-title">连接稳定</h3>
+                        <p class="feature-description">
+                            心跳检测机制（15秒间隔），超时自动断开（10秒），断线自动重连（指数退避策略）。
+                        </p>
+                    </article>
+                    
+                    <article class="feature-card">
+                        <div class="feature-icon">💾</div>
+                        <h3 class="feature-title">数据持久化</h3>
+                        <p class="feature-description">
+                            SQLite 数据库存储，WAL 模式提升并发性能，历史消息自动推送，默认 50 条记录。
+                        </p>
+                    </article>
                 </div>
             </div>
-        </article>
+        </section>
 
-        <article class="card quick-start">
-            <h2>快速开始</h2>
-            
-            <h3>安装依赖</h3>
-            <div class="code-block">
-                <span class="comment"># 克隆项目</span><br>
-                git clone &lt;repository-url&gt;<br>
-                cd LanChat-CLI<br><br>
-                <span class="comment"># 安装依赖</span><br>
-                <span class="command">npm install</span>
+        <section class="section" id="quick-start">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-tag">快速开始</span>
+                    <h2 class="section-title">5 分钟上手</h2>
+                    <p class="section-description">
+                        简单几步，即可在局域网内开启聊天
+                    </p>
+                </div>
+                
+                <div class="quick-start">
+                    <div class="steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h3>克隆项目并安装依赖</h3>
+                                <div class="code-block">
+<pre><span class="comment"># 克隆仓库</span>
+git clone &lt;repository-url&gt;
+cd LanChat-CLI
+
+<span class="comment"># 安装依赖</span>
+<span class="command">npm install</span></pre>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h3>生成 TLS 证书</h3>
+                                <div class="code-block">
+<pre><span class="comment"># 创建证书目录</span>
+mkdir -p certs
+
+<span class="comment"># 生成自签名证书（有效期 10 年）</span>
+openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+  -keyout certs/server.key \
+  -out certs/server.crt \
+  -subj "/CN=LanChat"</pre>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h3>配置环境并编译</h3>
+                                <div class="code-block">
+<pre><span class="comment"># 复制配置文件</span>
+<span class="command">cp .env.example .env</span>
+
+<span class="comment"># 编辑 .env，设置 JWT_SECRET 等</span>
+
+<span class="comment"># 编译项目</span>
+<span class="command">npm run build</span></pre>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h3>启动服务</h3>
+                                <div class="code-block">
+<pre><span class="comment"># 终端 1 - 启动服务端</span>
+<span class="command">npm run start:server</span>
+
+<span class="comment"># 终端 2 - 启动客户端</span>
+<span class="command">npm run start:client</span></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </section>
 
-            <h3>生成 TLS 证书</h3>
-            <div class="code-block">
-                <span class="comment"># 创建证书目录</span><br>
-                mkdir -p certs<br><br>
-                <span class="comment"># 生成自签名证书（有效期10年）</span><br>
-                openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \<br>
-                &nbsp;&nbsp;-keyout certs/server.key \<br>
-                &nbsp;&nbsp;-out certs/server.crt \<br>
-                &nbsp;&nbsp;-subj "/CN=LanChat"
+        <section class="section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-tag">命令参考</span>
+                    <h2 class="section-title">客户端命令</h2>
+                    <p class="section-description">
+                        常用命令一览，快速掌握操作技巧
+                    </p>
+                </div>
+                
+                <div class="commands-wrapper">
+                    <table class="commands-table">
+                        <thead>
+                            <tr>
+                                <th>命令</th>
+                                <th>说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>/join #&lt;room&gt;</code></td>
+                                <td>加入或创建指定房间</td>
+                            </tr>
+                            <tr>
+                                <td><code>/leave</code></td>
+                                <td>离开当前房间</td>
+                            </tr>
+                            <tr>
+                                <td><code>/rooms</code></td>
+                                <td>列出所有房间及在线人数</td>
+                            </tr>
+                            <tr>
+                                <td><code>/msg &lt;nick&gt; &lt;message&gt;</code></td>
+                                <td>向指定用户发送私聊消息</td>
+                            </tr>
+                            <tr>
+                                <td><code>/nick &lt;newNick&gt;</code></td>
+                                <td>修改当前用户昵称</td>
+                            </tr>
+                            <tr>
+                                <td><code>/list</code></td>
+                                <td>刷新当前房间在线用户列表</td>
+                            </tr>
+                            <tr>
+                                <td><code>/history [count]</code></td>
+                                <td>拉取历史消息（默认 50 条，最大 200 条）</td>
+                            </tr>
+                            <tr>
+                                <td><code>/sendfile &lt;nick&gt; &lt;path&gt;</code></td>
+                                <td>向指定用户发送文件</td>
+                            </tr>
+                            <tr>
+                                <td><code>/quit</code></td>
+                                <td>优雅断开连接并退出程序</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
+        </section>
 
-            <h3>配置与编译</h3>
-            <div class="code-block">
-                <span class="comment"># 复制配置文件并编辑</span><br>
-                <span class="command">cp .env.example .env</span><br><br>
-                <span class="comment"># 编辑 .env，设置 JWT_SECRET（至少32字符）</span><br><br>
-                <span class="comment"># 编译项目</span><br>
-                <span class="command">npm run build</span>
-            </div>
-
-            <h3>启动服务</h3>
-            <div class="code-block">
-                <span class="comment"># 终端1 - 启动服务端</span><br>
-                <span class="command">npm run start:server</span><br><br>
-                <span class="comment"># 终端2 - 启动客户端</span><br>
-                <span class="command">npm run start:client</span>
-            </div>
-        </article>
-
-        <article class="card">
-            <h2>客户端命令</h2>
-            <table class="commands-table">
-                <thead>
-                    <tr>
-                        <th>命令</th>
-                        <th>说明</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code>/join #&lt;room&gt;</code></td>
-                        <td>加入或创建指定房间</td>
-                    </tr>
-                    <tr>
-                        <td><code>/leave</code></td>
-                        <td>离开当前房间</td>
-                    </tr>
-                    <tr>
-                        <td><code>/rooms</code></td>
-                        <td>列出所有房间及在线人数</td>
-                    </tr>
-                    <tr>
-                        <td><code>/msg &lt;nick&gt; &lt;message&gt;</code></td>
-                        <td>向指定用户发送私聊消息</td>
-                    </tr>
-                    <tr>
-                        <td><code>/nick &lt;newNick&gt;</code></td>
-                        <td>修改当前用户昵称</td>
-                    </tr>
-                    <tr>
-                        <td><code>/list</code></td>
-                        <td>刷新当前房间在线用户列表</td>
-                    </tr>
-                    <tr>
-                        <td><code>/history [count]</code></td>
-                        <td>拉取历史消息（默认50条，最大200条）</td>
-                    </tr>
-                    <tr>
-                        <td><code>/sendfile &lt;nick&gt; &lt;path&gt;</code></td>
-                        <td>向指定用户发送文件</td>
-                    </tr>
-                    <tr>
-                        <td><code>/quit</code></td>
-                        <td>优雅断开连接并退出程序</td>
-                    </tr>
-                </tbody>
-            </table>
-        </article>
-
-        <article class="card">
-            <h2>技术架构</h2>
-            <div class="architecture">
-                <pre>
-<span class="comment"># 项目目录结构</span>
+        <section class="section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-tag">技术架构</span>
+                    <h2 class="section-title">项目结构与技术栈</h2>
+                    <p class="section-description">
+                        清晰的代码架构，现代化的技术选型
+                    </p>
+                </div>
+                
+                <div class="architecture">
+<pre><span class="comment"># 项目目录结构</span>
 <span class="dir">src/</span>
 ├── <span class="dir">shared/</span>              <span class="comment"># 共享模块</span>
 │   ├── <span class="dir">protocol/</span>           <span class="comment"># 协议定义、编解码器</span>
-│   ├── <span class="file">constants.ts</span>       <span class="comment"># 常量配置</span>
-│   ├── <span class="file">errors.ts</span>          <span class="comment"># 错误定义</span>
-│   └── <span class="file">validators.ts</span>      <span class="comment"># 输入校验</span>
+│   ├── constants.ts       <span class="comment"># 常量配置</span>
+│   ├── errors.ts          <span class="comment"># 错误定义</span>
+│   └── validators.ts      <span class="comment"># 输入校验</span>
 ├── <span class="dir">server/</span>             <span class="comment"># 服务端</span>
 │   ├── <span class="dir">repositories/</span>      <span class="comment"># 数据访问层</span>
 │   ├── <span class="dir">services/</span>          <span class="comment"># 业务逻辑层</span>
-│   ├── <span class="file">TlsServer.ts</span>       <span class="comment"># TLS 服务器</span>
-│   ├── <span class="file">AuthManager.ts</span>     <span class="comment"># 认证管理</span>
-│   └── <span class="file">...</span>
+│   ├── TlsServer.ts       <span class="comment"># TLS 服务器</span>
+│   ├── AuthManager.ts     <span class="comment"># 认证管理</span>
+│   └── ...
 ├── <span class="dir">client/</span>             <span class="comment"># 客户端</span>
 │   ├── <span class="dir">components/</span>         <span class="comment"># TUI 组件</span>
-│   ├── <span class="file">ChatClient.ts</span>      <span class="comment"># 核心客户端</span>
-│   └── <span class="file">...</span>
+│   ├── ChatClient.ts      <span class="comment"># 核心客户端</span>
+│   └── ...
 └── <span class="dir">p2p/</span>                <span class="comment"># P2P 预留模块</span></pre>
-            </div>
-
-            <h3>技术栈</h3>
-            <div class="tech-stack">
-                <div class="tech-item">
-                    <strong>运行时</strong>
-                    <span>Node.js 18+ LTS</span>
                 </div>
-                <div class="tech-item">
-                    <strong>语言</strong>
-                    <span>TypeScript 5.x</span>
-                </div>
-                <div class="tech-item">
-                    <strong>通信</strong>
-                    <span>TCP / TLS 1.3</span>
-                </div>
-                <div class="tech-item">
-                    <strong>数据库</strong>
-                    <span>SQLite (WAL)</span>
-                </div>
-                <div class="tech-item">
-                    <strong>认证</strong>
-                    <span>JWT / Argon2id</span>
-                </div>
-                <div class="tech-item">
-                    <strong>界面</strong>
-                    <span>blessed TUI</span>
+                
+                <div class="tech-stack">
+                    <span class="tech-item">Node.js 18+ LTS</span>
+                    <span class="tech-item">TypeScript 5.x</span>
+                    <span class="tech-item">TCP / TLS 1.3</span>
+                    <span class="tech-item">SQLite (WAL)</span>
+                    <span class="tech-item">JWT / Argon2id</span>
+                    <span class="tech-item">blessed TUI</span>
+                    <span class="tech-item">winston 日志</span>
                 </div>
             </div>
-        </article>
+        </section>
 
-        <article class="card">
-            <h2>相关文档</h2>
-            <ul class="docs-list">
-                <li>
-                    <span class="icon" aria-hidden="true">📄</span>
-                    <a href="protocol.html">通信协议文档</a>
-                    <span class="desc">完整的二进制协议定义与28种消息类型说明</span>
-                </li>
-                <li>
-                    <span class="icon" aria-hidden="true">📖</span>
-                    <a href="README.md">README 文档</a>
-                    <span class="desc">项目详细说明、安装部署与使用指南</span>
-                </li>
-                <li>
-                    <span class="icon" aria-hidden="true">📜</span>
-                    <a href="LICENSE">MIT 许可证</a>
-                    <span class="desc">开源许可协议</span>
-                </li>
-            </ul>
-        </article>
+        <section class="section">
+            <div class="container">
+                <div class="section-header">
+                    <span class="section-tag">文档</span>
+                    <h2 class="section-title">更多资源</h2>
+                    <p class="section-description">
+                        深入了解项目的设计与实现
+                    </p>
+                </div>
+                
+                <ul class="docs-list">
+                    <li>
+                        <a href="protocol.html" class="doc-card">
+                            <span class="doc-icon" aria-hidden="true">📄</span>
+                            <div class="doc-info">
+                                <h4>通信协议文档</h4>
+                                <p>完整二进制协议定义与消息类型说明</p>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="README.md" class="doc-card">
+                            <span class="doc-icon" aria-hidden="true">📖</span>
+                            <div class="doc-info">
+                                <h4>README 文档</h4>
+                                <p>项目详细说明、安装部署与使用指南</p>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="LICENSE" class="doc-card">
+                            <span class="doc-icon" aria-hidden="true">📜</span>
+                            <div class="doc-info">
+                                <h4>MIT 许可证</h4>
+                                <p>开源许可协议说明</p>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </section>
     </main>
 
     <footer class="footer">
-        <h3>LanChat CLI</h3>
-        <p>基于 TCP/TLS 的局域网聊天室命令行程序</p>
-        <p style="margin-top: 1rem;">
-            <a href="https://github.com/your-username/LanChat-CLI" aria-label="访问 LanChat CLI GitHub 仓库">GitHub 仓库</a>
-        </p>
-        <div class="license">
-            采用 MIT 许可证开源 | 版本 1.0.0
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://github.com/your-username/LanChat-CLI" class="footer-link" aria-label="访问 GitHub 仓库">GitHub</a>
+                <span class="footer-divider">·</span>
+                <a href="protocol.html" class="footer-link">协议文档</a>
+                <span class="footer-divider">·</span>
+                <a href="README.md" class="footer-link">README</a>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 LanChat CLI. 使用 MIT 许可证开源。</p>
+            </div>
         </div>
     </footer>
 </body>
