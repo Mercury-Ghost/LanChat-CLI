@@ -1,6 +1,4 @@
 import * as readline from 'readline';
-import * as path from 'path';
-import * as fs from 'fs';
 import dotenv from 'dotenv';
 import { ChatClient } from './ChatClient';
 import { TuiManager } from './TuiManager';
@@ -28,7 +26,7 @@ class LanChatClient {
     const host = await this.prompt('服务器地址', DEFAULT_HOST);
     const port = parseInt(await this.prompt('端口', DEFAULT_PORT.toString()), 10);
 
-    this.tui = new TuiManager(this.client);
+    this.tui = new TuiManager();
     this.client.setTui(this.tui);
 
     try {
@@ -117,15 +115,49 @@ class LanChatClient {
 
   private promptPassword(question: string): Promise<string> {
     return new Promise((resolve) => {
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-      });
-
-      rl.question(`${question}: `, (password) => {
-        rl.close();
-        resolve(password);
-      });
+      process.stdout.write(`${question}: `);
+      
+      if (process.stdin.isTTY) {
+        process.stdin.setRawMode(true);
+      }
+      process.stdin.resume();
+      process.stdin.setEncoding('utf8');
+      
+      let password = '';
+      
+      const onData = (char: string) => {
+        switch (char) {
+          case '\n':
+          case '\r':
+          case '\u0004':
+            if (process.stdin.isTTY) {
+              process.stdin.setRawMode(false);
+            }
+            process.stdin.pause();
+            process.stdin.removeListener('data', onData);
+            process.stdout.write('\n');
+            resolve(password);
+            break;
+          case '\u0003':
+            process.exit();
+            break;
+          case '\u007F':
+          case '\b':
+            if (password.length > 0) {
+              password = password.slice(0, -1);
+              process.stdout.clearLine(0);
+              process.stdout.cursorTo(0);
+              process.stdout.write(`${question}: ${'*'.repeat(password.length)}`);
+            }
+            break;
+          default:
+            password += char;
+            process.stdout.write('*');
+            break;
+        }
+      };
+      
+      process.stdin.on('data', onData);
     });
   }
 

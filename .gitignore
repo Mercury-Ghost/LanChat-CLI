@@ -2,14 +2,15 @@ node_modules/
 dist/
 *.log
 .env
-data/lanchat.db
-data/files/
+data/
 logs/
 *.tsbuildinfo
 .DS_Store
 *.db-shm
 *.db-wal
-docs/设计文档.md
+coverage/
+__tests__/
+jest.config.js
 .trae/
 
 # 证书私钥

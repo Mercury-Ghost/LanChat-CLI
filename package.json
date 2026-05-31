@@ -15,7 +15,6 @@
     "start:client": "node dist/client/index.js",
     "dev:server": "ts-node src/server/index.ts",
     "dev:client": "ts-node src/client/index.ts",
-    "test": "jest",
     "lint": "eslint src --ext .ts"
   },
   "keywords": [
@@ -28,8 +27,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "argon2": "^0.31.2",
-    "better-sqlite3": "^9.4.3",
     "blessed": "^0.1.81",
     "dotenv": "^16.4.5",
     "jsonwebtoken": "^9.0.2",

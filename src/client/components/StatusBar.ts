@@ -1,5 +1,9 @@
 import blessed, { Widgets } from 'blessed';
 
+/**
+ * 状态栏组件
+ * @description 显示连接状态和文件传输进度
+ */
 export class StatusBar {
   private container: Widgets.BoxElement;
   private statusText: Widgets.TextElement;

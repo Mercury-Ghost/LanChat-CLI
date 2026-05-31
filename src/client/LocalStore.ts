@@ -2,6 +2,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
+/**
+ * 本地存储管理器
+ * @description 管理客户端本地配置数据，包括认证令牌、用户设置等
+ */
 export class LocalStore {
   private storePath: string;
   private data: {
@@ -25,7 +29,6 @@ export class LocalStore {
 
   private load(): typeof this.data {
     this.ensureDir();
-
     if (fs.existsSync(this.storePath)) {
       try {
         const content = fs.readFileSync(this.storePath, 'utf8');
@@ -34,7 +37,6 @@ export class LocalStore {
         return {};
       }
     }
-
     return {};
   }
 

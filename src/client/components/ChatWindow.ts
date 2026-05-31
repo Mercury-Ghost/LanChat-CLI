@@ -1,5 +1,9 @@
 import blessed, { Widgets } from 'blessed';
 
+/**
+ * 聊天消息窗口组件
+ * @description 显示聊天消息，支持群聊、私聊和系统消息
+ */
 export class ChatWindow {
   private container: Widgets.BoxElement;
   private messages: Widgets.TextElement | null = null;
@@ -32,7 +36,7 @@ export class ChatWindow {
       },
     });
 
-    const header = blessed.text({
+    blessed.text({
       parent: this.container,
       top: 0,
       left: 1,
@@ -62,15 +66,12 @@ export class ChatWindow {
       case 'system':
         line = `{green-fg}[${time}] ** ${message.content}{/green-fg}`;
         break;
-
       case 'private':
         line = `{yellow-fg}[${time}] [PM from ${message.sender}] ${message.content}{/yellow-fg}`;
         break;
-
       case 'room':
         line = `{white-fg}[${time}] <${message.sender}> ${message.content}{/white-fg}`;
         break;
-
       default:
         line = `{grey-fg}[${time}] ${message.content}{/grey-fg}`;
     }
@@ -78,7 +79,6 @@ export class ChatWindow {
     const currentContent = this.scrollable.getContent();
     const newContent = currentContent + line + '\n';
     this.scrollable.setContent(newContent);
-
     this.scrollable.scroll(1);
   }
 

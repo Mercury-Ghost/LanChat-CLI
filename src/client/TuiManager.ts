@@ -1,26 +1,40 @@
 import blessed from 'blessed';
-import { EventEmitter } from 'events';
-import { ChatClient } from './ChatClient';
+import type { Widgets } from 'blessed';
 import { ChatWindow } from './components/ChatWindow';
 import { UserList } from './components/UserList';
 import { InputBar } from './components/InputBar';
 import { StatusBar } from './components/StatusBar';
 import { OnlineUser, RoomInfo } from '../shared/protocol/types';
 
-export class TuiManager extends EventEmitter {
-  private screen: blessed.Widgets.Screen;
+type MessageData = {
+  type: string;
+  sender?: string;
+  content: string;
+  timestamp: string;
+  room?: string;
+};
+
+/**
+ * TUI 管理器类
+ * @description 管理终端用户界面的各个组件，协调用户交互和界面更新
+ */
+export class TuiManager {
+  private screen: Widgets.Screen;
   private chatWindow: ChatWindow;
   private userList: UserList;
   private inputBar: InputBar;
   private statusBar: StatusBar;
-  private client: ChatClient;
+  private mainContainer: Widgets.BoxElement;
+  private isRunning: boolean = false;
 
-  constructor(client: ChatClient) {
-    super();
-    this.client = client;
+  /**
+   * 构造函数
+   * @description 初始化所有 UI 组件并设置基础布局
+   */
+  constructor() {
     this.screen = blessed.screen({
       smartCSR: true,
-      title: 'LanChat',
+      title: 'LanChat CLI',
     });
 
     this.chatWindow = new ChatWindow();
@@ -28,141 +42,77 @@ export class TuiManager extends EventEmitter {
     this.inputBar = new InputBar();
     this.statusBar = new StatusBar();
 
+    this.mainContainer = blessed.box({
+      width: '100%',
+      height: '100%',
+    });
+
     this.setupLayout();
     this.setupKeyBindings();
   }
 
+  /**
+   * 设置界面布局
+   * @private
+   */
   private setupLayout(): void {
-    const mainBox = blessed.box({
-      parent: this.screen,
-      width: '100%-30',
-      height: '100%-3',
-      border: 'line',
-      style: {
-        border: {
-          fg: 'blue',
-        },
-      },
-    });
-
-    this.chatWindow.appendTo(mainBox);
+    this.screen.append(this.mainContainer);
+    this.chatWindow.appendTo(this.mainContainer);
     this.userList.attachTo(this.screen);
-
-    const bottomBox = blessed.box({
-      parent: this.screen,
-      height: 3,
-      bottom: 0,
-      border: 'line',
-    });
-
-    this.inputBar.appendTo(bottomBox);
+    this.inputBar.appendTo(this.mainContainer);
     this.statusBar.attachTo(this.screen);
+
+    this.inputBar.focus();
   }
 
+  /**
+   * 设置键盘快捷键
+   * @private
+   */
   private setupKeyBindings(): void {
     this.screen.key(['C-c'], () => {
-      this.client.disconnect();
       process.exit(0);
     });
 
-    this.screen.key(['Esc'], () => {
-      this.inputBar.clear();
-    });
-
     this.screen.key(['Tab'], () => {
-      this.handleTabCompletion();
+      // 切换焦点
     });
 
-    this.inputBar.on('submit', (text: string) => {
-      this.handleInput(text);
+    this.screen.key(['Escape'], () => {
+      // 取消当前操作
     });
   }
 
-  private handleInput(text: string): void {
-    if (text.startsWith('/')) {
-      this.handleCommand(text);
-    } else {
-      this.client.sendRoomMessage(text);
-    }
-
-    this.inputBar.clear();
+  /**
+   * 获取输入回调设置器
+   * @param callback - 输入提交时的回调函数
+   */
+  setInputCallback(callback: (text: string) => void): void {
+    this.inputBar.onSubmit(callback);
   }
 
-  private handleCommand(text: string): void {
-    const [command, ...args] = text.slice(1).split(' ');
-
-    switch (command.toLowerCase()) {
-      case 'join':
-        if (args[0]) {
-          this.client.joinRoom(args[0]);
-        }
-        break;
-
-      case 'leave':
-        this.client.leaveRoom();
-        break;
-
-      case 'msg':
-        if (args.length >= 2) {
-          const target = args[0];
-          const message = args.slice(1).join(' ');
-          this.client.sendPrivateMessage(target, message);
-        }
-        break;
-
-      case 'nick':
-        if (args[0]) {
-          this.client.changeNickname(args[0]);
-        }
-        break;
-
-      case 'list':
-        this.statusBar.setStatus(`在线用户: ${this.client.getOnlineUsers().length}`);
-        break;
-
-      case 'history':
-        const count = args[0] ? parseInt(args[0], 10) : 50;
-        this.client.requestHistory(count);
-        break;
-
-      case 'sendfile':
-        if (args.length >= 2) {
-          this.client.sendFile(args[0], args[1]);
-        }
-        break;
-
-      case 'quit':
-        this.client.disconnect();
-        process.exit(0);
-        break;
-
-      default:
-        this.appendMessage({
-          type: 'system',
-          content: `未知命令: /${command}`,
-          timestamp: new Date().toISOString(),
-        });
-    }
-  }
-
-  private handleTabCompletion(): void {
-    const users = this.client.getOnlineUsers();
-    const nicknames = users.map((u) => u.nickname);
-
-    this.inputBar.setCompletions(nicknames);
-  }
-
-  start(): void {
+  /**
+   * 更新用户列表显示
+   * @param users - 用户列表
+   */
+  updateUserList(users: OnlineUser[]): void {
+    this.userList.update(users);
     this.screen.render();
-    this.inputBar.focus();
-    this.updateStatus();
   }
 
-  stop(): void {
-    this.screen.destroy();
+  /**
+   * 更新房间列表显示
+   * @param rooms - 房间列表
+   */
+  updateRoomList(_rooms: RoomInfo[]): void {
+    this.screen.render();
   }
 
-  appendMessage(message: {
+  /**
+   * 显示消息
+   * @param message - 消息对象
+   */
+  showMessage(message: {
     type: string;
     sender?: string;
     content: string;
@@ -173,26 +123,63 @@ export class TuiManager extends EventEmitter {
     this.screen.render();
   }
 
-  updateUserList(users: OnlineUser[]): void {
-    this.userList.update(users);
+  /**
+   * 更新连接状态
+   * @param status - 状态文本
+   */
+  setStatus(status: string): void {
+    this.statusBar.setStatus(status);
     this.screen.render();
   }
 
-  updateRoomList(rooms: RoomInfo[]): void {
-    this.chatWindow.setTitle(`房间列表 (${rooms.length})`);
-    this.screen.render();
-  }
-
-  updateStatus(): void {
-    const state = this.client.getState();
-    const room = this.client.getCurrentRoom();
-
-    this.statusBar.setStatus(`状态: ${state} | 房间: ${room}`);
-    this.screen.render();
-  }
-
-  setFileTransferProgress(progress: number): void {
+  /**
+   * 显示文件传输进度
+   * @param progress - 进度百分比 (0-100)
+   */
+  showFileTransferProgress(progress: number): void {
     this.statusBar.setFileTransfer(progress);
+    this.screen.render();
+  }
+
+  /**
+   * 渲染界面
+   */
+  render(): void {
+    this.screen.render();
+  }
+
+  /**
+   * 销毁 TUI
+   */
+  destroy(): void {
+    this.screen.destroy();
+  }
+
+  /**
+   * 启动 TUI
+   * @description 开始渲染界面并设置焦点
+   */
+  start(): void {
+    this.isRunning = true;
+    this.screen.render();
+    this.inputBar.focus();
+  }
+
+  /**
+   * 停止 TUI
+   * @description 停止界面渲染并清理资源
+   */
+  stop(): void {
+    this.isRunning = false;
+    this.destroy();
+  }
+
+  /**
+   * 添加消息到聊天窗口
+   * @param message - 消息对象
+   */
+  appendMessage(message: MessageData): void {
+    this.chatWindow.appendMessage(message);
     this.screen.render();
   }
 }

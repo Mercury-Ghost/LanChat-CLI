@@ -293,21 +293,139 @@ npm run lint
 - 使用 ESLint 进行代码风格检查
 - 提交前确保通过类型检查与 lint 检查
 - 为公共 API 和复杂逻辑添加注释
+- 代码风格遵循 `@typescript-eslint/recommended` 规则集
+
+#### ESLint 检查
+
+```bash
+# 运行 ESLint 检查
+npm run lint
+
+# 自动修复可修复的问题
+npm run lint -- --fix
+```
 
 ### 8.3 提交流程
 
 1. Fork 项目仓库
 2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 创建 Pull Request
+3. 编写代码并添加相应测试
+4. 确保所有测试通过 (`npm test`)
+5. 确保代码风格检查通过 (`npm run lint`)
+6. 确保类型检查通过 (`npx tsc --noEmit`)
+7. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+8. 推送到分支 (`git push origin feature/AmazingFeature`)
+9. 创建 Pull Request
+
+### PR 检查清单
+
+提交 Pull Request 前，请确保：
+
+- [ ] 代码通过 TypeScript 类型检查 (`npx tsc --noEmit`)
+- [ ] 代码通过 ESLint 检查 (`npm run lint`)
+- [ ] 所有测试通过 (`npm test`)
+- [ ] 新增代码有相应的测试覆盖
+- [ ] 测试覆盖率满足要求（核心模块 >= 80%）
+- [ ] 更新了相关文档（如有必要）
+- [ ] 提交信息清晰描述了更改内容
 
 ### 8.4 测试
 
-项目使用 Jest 进行测试，运行测试命令：
+项目使用 Jest 进行测试，支持单元测试和集成测试。
+
+#### 测试命令
 
 ```bash
-npm run test
+# 运行所有测试
+npm test
+
+# 运行测试并生成覆盖率报告
+npm run test:coverage
+
+# 监听模式运行测试（开发时使用）
+npm run test:watch
+
+# 运行特定测试文件
+npm test -- __tests__/client/ChatClient.test.ts
+
+# 运行特定测试用例（通过测试名称匹配）
+npm test -- --testNamePattern="should connect successfully"
+```
+
+#### 测试目录结构
+
+```
+__tests__/
+├── client/                    # 客户端单元测试
+│   ├── AuthClient.test.ts     # 认证客户端测试
+│   ├── ChatClient.test.ts     # 聊天客户端测试
+│   ├── CommandHandler.test.ts # 命令处理器测试
+│   ├── FileTransferClient.test.ts # 文件传输客户端测试
+│   └── Transport.test.ts      # 传输层测试
+├── integration/               # 集成测试
+│   ├── auth.test.ts           # 认证流程集成测试
+│   └── messaging.test.ts      # 消息传输集成测试
+├── mocks/                     # Mock 对象
+│   ├── index.ts               # Mock 导出入口
+│   └── transport.mock.ts      # 传输层 Mock 实现
+├── fixtures/                  # 测试数据
+│   ├── index.ts               # 测试数据导出入口
+│   └── test-data.ts           # 测试数据生成器
+└── helpers/                   # 测试辅助工具
+    ├── setup.ts               # Jest 全局设置
+    ├── test-utils.ts          # 测试辅助函数
+    └── index.ts               # 辅助工具导出入口
+```
+
+#### 测试覆盖率
+
+项目要求核心模块测试覆盖率 >= 80%。运行 `npm run test:coverage` 后，覆盖率报告将生成在 `coverage/` 目录下。
+
+覆盖率目标：
+- ChatClient: >= 85%
+- AuthClient: >= 90%
+- CommandHandler: >= 85%
+- FileTransferClient: >= 80%
+- Transport: >= 80%
+
+查看覆盖率报告：
+```bash
+# 生成覆盖率报告后，打开 HTML 报告
+open coverage/lcov-report/index.html
+```
+
+#### 编写测试
+
+测试文件应放置在 `__tests__/` 目录下，命名格式为 `<模块名>.test.ts`。
+
+```typescript
+// 示例：简单的单元测试
+describe('MyModule', () => {
+  it('should work correctly', () => {
+    const result = myFunction('input');
+    expect(result).toBe('expected output');
+  });
+});
+```
+
+使用 Mock 进行隔离测试：
+```typescript
+import { MockTransport } from '../mocks/transport.mock';
+
+describe('ChatClient', () => {
+  let mockTransport: MockTransport;
+  let client: ChatClient;
+
+  beforeEach(() => {
+    mockTransport = new MockTransport();
+    client = new ChatClient(mockTransport);
+  });
+
+  it('should connect using transport', async () => {
+    await client.connect('localhost', 9527);
+    expect(mockTransport.isConnected()).toBe(true);
+  });
+});
 ```
 
 ## 9. 版权信息
