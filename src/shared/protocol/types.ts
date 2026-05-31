@@ -40,6 +40,7 @@ export interface LoginRequest {
 export interface LoginResponse {
   success: boolean;
   token?: string;
+  userId?: number;
   nickname?: string;
   error?: string;
 }
@@ -51,6 +52,7 @@ export interface RegisterRequest {
 
 export interface RegisterResponse {
   success: boolean;
+  message?: string;
   error?: string;
 }
 
@@ -84,7 +86,7 @@ export interface RoomJoinRequest {
 }
 
 export interface RoomJoinResponse {
-  room: string;
+  roomName?: string;
   success: boolean;
   error?: string;
 }
@@ -138,6 +140,7 @@ export interface ChatSystemPayload {
 
 export interface HistoryRequestPayload {
   room?: string;
+  target?: string;
   type?: 'room' | 'private';
   count?: number;
   token?: string;
@@ -208,4 +211,25 @@ export interface OnlineUser {
   nickname: string;
   socketId: string;
   activeRoom: string;
+}
+
+export interface ChatRoomMessage {
+  room: string;
+  sender: string;
+  text: string;
+  timestamp: string;
+}
+
+export interface ChatPrivateMessage {
+  from: string;
+  text: string;
+  timestamp: string;
+}
+
+export interface RoomListMessage {
+  rooms: RoomInfo[];
+}
+
+export interface UserListMessage {
+  users: OnlineUser[];
 }

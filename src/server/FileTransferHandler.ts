@@ -9,7 +9,7 @@ import { FileRequestPayload, FileChunkPayload } from '../shared/protocol/types';
 import { ValidationError } from '../shared/errors';
 
 export class FileTransferHandler {
-  private activeTransfers: Map<string, FileMetadata> = new Map();
+  private activeTransfers: Map<string, FileMetadata & { senderId: number; receiverId?: number | null; roomId?: number | null }> = new Map();
   private tempFiles: Map<string, { writeStream: fs.WriteStream }> = new Map();
   private database: Database;
   private fileRepo: FileRepo;
@@ -40,20 +40,25 @@ export class FileTransferHandler {
     transferId: string,
     fileName: string,
     fileSize: number,
-    senderId: number
-  ): FileMetadata {
+    senderId: number,
+    receiverId?: number | null,
+    roomId?: number | null
+  ): FileMetadata & { senderId: number; receiverId?: number | null; roomId?: number | null } {
     if (fileSize <= 0 || fileSize > MAX_FILE_SIZE) {
       throw new ValidationError(`文件大小必须在 1 字节到 ${MAX_FILE_SIZE} 字节之间`);
     }
 
     const totalChunks = FileSplitter.calculateTotalChunks(fileSize);
 
-    const metadata: FileMetadata = {
+    const metadata: FileMetadata & { senderId: number; receiverId?: number | null; roomId?: number | null } = {
       transferId,
       fileName,
       fileSize,
       totalChunks,
       receivedChunks: new Set(),
+      senderId,
+      receiverId,
+      roomId,
     };
 
     this.activeTransfers.set(transferId, metadata);
@@ -65,7 +70,7 @@ export class FileTransferHandler {
       writeStream,
     });
 
-    this.logger.info('文件传输开始', { transferId, fileName, fileSize, senderId });
+    this.logger.info('文件传输开始', { transferId, fileName, fileSize, senderId, receiverId, roomId });
 
     return metadata;
   }
@@ -118,9 +123,9 @@ export class FileTransferHandler {
 
     this.fileRepo.create({
       transferId,
-      senderId: 0,
-      receiverId: null,
-      roomId: null,
+      senderId: transfer.senderId,
+      receiverId: transfer.receiverId,
+      roomId: transfer.roomId,
       fileName: transfer.fileName,
       fileSize: transfer.fileSize,
       storedPath: finalFilePath,

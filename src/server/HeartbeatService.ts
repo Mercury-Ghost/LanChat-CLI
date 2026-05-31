@@ -8,14 +8,17 @@ export class HeartbeatService {
   private logger: Logger;
   private heartbeatInterval: NodeJS.Timeout | null = null;
   private isRunning: boolean = false;
+  private socketId: string;
 
   constructor(connection: ClientConnection, logger: Logger) {
     this.connection = connection;
     this.logger = logger;
+    this.socketId = connection.getSocketId();
   }
 
   start(): void {
     if (this.isRunning) {
+      this.logger.debug('心跳服务已在运行', { socketId: this.socketId });
       return;
     }
 
@@ -25,7 +28,7 @@ export class HeartbeatService {
       this.sendHeartbeat();
     }, HEARTBEAT_INTERVAL);
 
-    this.logger.debug('心跳服务已启动');
+    this.logger.info('心跳服务已启动', { socketId: this.socketId, interval: HEARTBEAT_INTERVAL });
   }
 
   stop(): void {
@@ -34,21 +37,24 @@ export class HeartbeatService {
       this.heartbeatInterval = null;
     }
 
-    this.isRunning = false;
-    this.logger.debug('心跳服务已停止');
+    if (this.isRunning) {
+      this.isRunning = false;
+      this.logger.info('心跳服务已停止', { socketId: this.socketId });
+    }
   }
 
   private sendHeartbeat(): void {
     try {
       this.connection.sendMessage(MessageType.HEARTBEAT, {});
-      this.logger.debug('发送心跳包');
+      this.logger.debug('发送心跳包', { socketId: this.socketId });
     } catch (error) {
-      this.logger.error('发送心跳失败', { error });
+      this.logger.error('发送心跳失败', { socketId: this.socketId, error });
     }
   }
 
   reset(): void {
     if (this.isRunning) {
+      this.logger.debug('重置心跳服务', { socketId: this.socketId });
       this.stop();
       this.start();
     }

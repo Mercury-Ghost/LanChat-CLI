@@ -91,7 +91,9 @@ export class FileService {
       transferId,
       request.fileName,
       request.fileSize,
-      senderId
+      senderId,
+      session.receiverId,
+      session.roomId
     );
 
     this.logger.info('文件传输会话创建', {
@@ -99,6 +101,8 @@ export class FileService {
       fileName: request.fileName,
       fileSize: request.fileSize,
       senderId,
+      receiverId: session.receiverId,
+      roomId: session.roomId,
     });
 
     return session;

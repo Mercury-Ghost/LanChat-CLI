@@ -1,21 +1,30 @@
 import tls from 'tls';
-import { Server as NetServer, Socket } from 'net';
+import { Socket } from 'net';
 import { Database } from './Database';
 import { ClientConnection } from './ClientConnection';
 import { Logger } from 'winston';
 import { CERT_PATH, KEY_PATH, SERVER_PORT } from '../shared/constants';
 import * as fs from 'fs';
 import * as path from 'path';
+import { RoomManager } from './RoomManager';
+import { UserManager } from './UserManager';
+import { AuthManager } from './AuthManager';
 
 export class TlsServer {
   private server: tls.Server | null = null;
   private connections: Map<string, ClientConnection> = new Map();
   private database: Database;
   private logger: Logger;
+  private roomManager: RoomManager;
+  private userManager: UserManager;
+  private authManager: AuthManager;
 
   constructor(database: Database, logger: Logger) {
     this.database = database;
     this.logger = logger;
+    this.roomManager = new RoomManager(database, logger);
+    this.userManager = new UserManager(logger);
+    this.authManager = new AuthManager(database);
   }
 
   async start(): Promise<void> {
@@ -66,7 +75,16 @@ export class TlsServer {
   private handleConnection(socket: Socket): void {
     const socketId = `${socket.remoteAddress}:${socket.remotePort}`;
 
-    const connection = new ClientConnection(socket, socketId, this.database, this.logger, this);
+    const connection = new ClientConnection(
+      socket,
+      socketId,
+      this.database,
+      this.logger,
+      this,
+      this.authManager,
+      this.userManager,
+      this.roomManager
+    );
     this.connections.set(socketId, connection);
 
     this.logger.info('新连接', { socketId });
@@ -82,7 +100,20 @@ export class TlsServer {
   }
 
   getAllConnections(): Map<string, ClientConnection> {
-    return this.connections;
+    // 返回 Map 的副本，避免外部直接修改内部数据结构
+    return new Map(this.connections);
+  }
+
+  getRoomManager(): RoomManager {
+    return this.roomManager;
+  }
+
+  getUserManager(): UserManager {
+    return this.userManager;
+  }
+
+  getAuthManager(): AuthManager {
+    return this.authManager;
   }
 
   broadcast(message: Buffer, excludeSocketIds?: string[]): void {
@@ -90,6 +121,23 @@ export class TlsServer {
       if (!excludeSocketIds?.includes(socketId)) {
         connection.send(message);
       }
+    }
+  }
+
+  broadcastToRoom(roomName: string, message: Buffer, excludeSocketIds?: string[]): void {
+    try {
+      const userSocketIds = this.userManager.getUsersInRoomSocketIds(roomName);
+      for (const socketId of userSocketIds) {
+        if (!excludeSocketIds?.includes(socketId)) {
+          const connection = this.connections.get(socketId);
+          if (connection) {
+            connection.send(message);
+          }
+        }
+      }
+      this.logger.debug('广播到房间', { roomName, userCount: userSocketIds.length });
+    } catch (error) {
+      this.logger.error('房间广播失败', { roomName, error });
     }
   }
 

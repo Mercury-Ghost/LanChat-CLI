@@ -80,7 +80,9 @@ export class RoomManager {
   }
 
   getRoomMembers(name: string): Set<number> {
-    return this.rooms.get(name) || new Set();
+    // 返回 Set 的副本，避免外部直接修改内部数据结构
+    const roomMembers = this.rooms.get(name);
+    return roomMembers ? new Set(roomMembers) : new Set();
   }
 
   getRoomMemberCount(name: string): number {
@@ -120,5 +122,17 @@ export class RoomManager {
 
   roomExists(name: string): boolean {
     return this.rooms.has(name);
+  }
+
+  /**
+   * 从默认房间中移除用户（用于用户断开连接时的清理）
+   * 与 leaveRoom 不同，此方法专门用于默认房间，不会抛出异常
+   */
+  removeFromDefaultRoom(userId: number): void {
+    const defaultRoom = this.rooms.get(DEFAULT_ROOM_NAME);
+    if (defaultRoom && defaultRoom.has(userId)) {
+      defaultRoom.delete(userId);
+      this.logger.debug('用户已从默认房间移除', { userId });
+    }
   }
 }

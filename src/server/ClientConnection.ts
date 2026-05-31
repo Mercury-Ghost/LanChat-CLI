@@ -8,9 +8,9 @@ import { MessageType } from '../shared/protocol/types';
 import { MessageRouter } from './MessageRouter';
 import { AuthManager } from './AuthManager';
 import { UserManager } from './UserManager';
+import { RoomManager } from './RoomManager';
 import { HeartbeatService } from './HeartbeatService';
-import { AuthenticatedUser } from '../shared/protocol/types';
-import * as uuid from 'uuid';
+import { AuthenticatedUser, UserListMessage } from '../shared/protocol/types';
 
 export class ClientConnection extends EventEmitter {
   private socket: Socket;
@@ -25,6 +25,7 @@ export class ClientConnection extends EventEmitter {
   private messageRouter: MessageRouter;
   private authManager: AuthManager;
   private userManager: UserManager;
+  private roomManager: RoomManager;
   private heartbeatService: HeartbeatService;
 
   constructor(
@@ -32,7 +33,10 @@ export class ClientConnection extends EventEmitter {
     socketId: string,
     database: Database,
     logger: Logger,
-    server: TlsServer
+    server: TlsServer,
+    authManager: AuthManager,
+    userManager: UserManager,
+    roomManager: RoomManager
   ) {
     super();
     this.socket = socket;
@@ -40,10 +44,19 @@ export class ClientConnection extends EventEmitter {
     this.database = database;
     this.logger = logger;
     this.server = server;
+    this.authManager = authManager;
+    this.userManager = userManager;
+    this.roomManager = roomManager;
 
-    this.authManager = new AuthManager(database);
-    this.userManager = new UserManager(logger);
-    this.messageRouter = new MessageRouter(this, database, this.authManager, this.userManager, logger);
+    this.messageRouter = new MessageRouter(
+      this,
+      database,
+      this.authManager,
+      this.userManager,
+      this.roomManager,
+      this.server,
+      logger
+    );
     this.heartbeatService = new HeartbeatService(this, logger);
 
     this.setupSocketHandlers();
@@ -99,7 +112,7 @@ export class ClientConnection extends EventEmitter {
     }
   }
 
-  private resetHeartbeatTimeout(): void {
+  resetHeartbeatTimeout(): void {
     if (this.heartbeatTimeout) {
       clearTimeout(this.heartbeatTimeout);
     }
@@ -113,6 +126,8 @@ export class ClientConnection extends EventEmitter {
   setAuthenticated(user: AuthenticatedUser): void {
     this.authenticatedUser = user;
     this.logger.info('用户认证成功', { socketId: this.socketId, nickname: user.nickname });
+    this.resetHeartbeatTimeout();
+    this.heartbeatService.start();
   }
 
   getAuthenticatedUser(): AuthenticatedUser | null {
@@ -139,15 +154,41 @@ export class ClientConnection extends EventEmitter {
   }
 
   private cleanup(): void {
+    this.logger.debug('开始清理连接资源', { socketId: this.socketId });
+
     if (this.heartbeatTimeout) {
       clearTimeout(this.heartbeatTimeout);
+      this.heartbeatTimeout = null;
+      this.logger.debug('已清除心跳超时定时器', { socketId: this.socketId });
     }
 
     if (this.authenticatedUser) {
+      // 先从 UserManager 获取用户信息以确定 activeRoom
+      const onlineUser = this.userManager.getUser(this.socketId);
+      
+      // 离开当前活动房间（如果不是默认房间）
+      if (onlineUser && onlineUser.activeRoom !== this.roomManager.getDefaultRoom()) {
+        try {
+          this.roomManager.leaveRoom(onlineUser.activeRoom, this.authenticatedUser.userId);
+        } catch (e) {
+          this.logger.debug('离开房间时出错', { socketId: this.socketId, error: e });
+        }
+      }
+      
+      // 从默认房间中移除用户
+      this.roomManager.removeFromDefaultRoom(this.authenticatedUser.userId);
+      
+      // 从 UserManager 中移除用户
       this.userManager.removeUser(this.socketId);
+
+      // 通知其他用户用户已离线
+      const remainingUsers = this.userManager.getOnlineUsers();
+      const message = MessageCodec.encodeJson(MessageType.USER_LIST, { users: remainingUsers });
+      this.server.broadcast(message);
     }
 
     this.heartbeatService.stop();
+    this.logger.debug('连接资源清理完成', { socketId: this.socketId });
   }
 
   close(): void {

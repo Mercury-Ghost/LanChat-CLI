@@ -1,22 +1,48 @@
 import { Database } from '../Database';
 import { UserManager } from '../UserManager';
+import { RoomManager } from '../RoomManager';
+import { TlsServer } from '../TlsServer';
+import { Logger } from 'winston';
 import { MessageRepo } from '../repositories/MessageRepo';
 import { RoomRepo } from '../repositories/RoomRepo';
+import { UserRepo } from '../repositories/UserRepo';
 import { DEFAULT_HISTORY_COUNT, DEFAULT_ROOM_NAME } from '../../shared/constants';
-import { ChatRoomPayload, ChatPrivatePayload, HistoryMessage } from '../../shared/protocol/types';
+import {
+  ChatRoomPayload,
+  ChatPrivatePayload,
+  HistoryMessage,
+  ChatRoomMessage,
+  ChatPrivateMessage,
+  MessageType,
+} from '../../shared/protocol/types';
 import { ValidationError } from '../../shared/errors';
+import { MessageCodec } from '../../shared/protocol/codec';
 
 export class ChatService {
   private database: Database;
   private userManager: UserManager;
+  private roomManager: RoomManager;
+  private server: TlsServer;
   private messageRepo: MessageRepo;
   private roomRepo: RoomRepo;
+  private userRepo: UserRepo;
+  private logger: Logger;
 
-  constructor(database: Database, userManager: UserManager) {
+  constructor(
+    database: Database,
+    userManager: UserManager,
+    roomManager: RoomManager,
+    server: TlsServer,
+    logger: Logger
+  ) {
     this.database = database;
     this.userManager = userManager;
+    this.roomManager = roomManager;
+    this.server = server;
     this.messageRepo = new MessageRepo(database);
     this.roomRepo = new RoomRepo(database);
+    this.userRepo = new UserRepo(database);
+    this.logger = logger;
   }
 
   sendRoomMessage(
@@ -35,6 +61,20 @@ export class ChatService {
       senderId,
       content
     );
+
+    const chatMessage: ChatRoomMessage = {
+      room: roomName,
+      sender: senderNickname,
+      text: content,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.server.broadcastToRoom(
+      roomName,
+      MessageCodec.encodeJson(MessageType.CHAT_ROOM, chatMessage)
+    );
+
+    this.logger.debug('房间消息发送', { roomName, senderId, senderNickname, content });
 
     return messageId;
   }
@@ -55,6 +95,19 @@ export class ChatService {
       targetUser.userId,
       content
     );
+
+    const chatMessage: ChatPrivateMessage = {
+      from: senderNickname,
+      text: content,
+      timestamp: new Date().toISOString(),
+    };
+
+    const targetConnection = this.server.getConnection(targetUser.socketId);
+    if (targetConnection) {
+      targetConnection.sendMessage(MessageType.CHAT_PRIVATE, chatMessage);
+    }
+
+    this.logger.debug('私聊消息发送', { senderId, senderNickname, targetNickname, content });
 
     return messageId;
   }
@@ -84,14 +137,14 @@ export class ChatService {
     targetNickname: string,
     count: number = DEFAULT_HISTORY_COUNT
   ): HistoryMessage[] {
-    const targetUser = this.userManager.getUserByNickname(targetNickname);
+    const targetUser = this.userRepo.findByNickname(targetNickname);
     if (!targetUser) {
-      throw new ValidationError('目标用户不在线');
+      throw new ValidationError('目标用户不存在');
     }
 
     const messages = this.messageRepo.getPrivateHistory(
       currentUserId,
-      targetUser.userId,
+      targetUser.id,
       count
     );
 

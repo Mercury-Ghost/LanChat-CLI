@@ -98,7 +98,8 @@ export class UserManager {
   }
 
   getOnlineUsers(): OnlineUser[] {
-    return Array.from(this.users.values());
+    // 返回用户对象的副本，避免外部直接修改内部数据
+    return Array.from(this.users.values()).map((user) => ({ ...user }));
   }
 
   getOnlineUserCount(): number {
