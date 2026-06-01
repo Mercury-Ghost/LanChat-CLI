@@ -961,17 +961,33 @@ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
 │   ├── <span class="dir">protocol/</span>           <span class="comment"># 协议定义、编解码器</span>
 │   ├── constants.ts       <span class="comment"># 常量配置</span>
 │   ├── errors.ts          <span class="comment"># 错误定义</span>
-│   └── validators.ts      <span class="comment"># 输入校验</span>
+│   ├── validators.ts      <span class="comment"># 输入校验</span>
+│   ├── utils.ts           <span class="comment"># 工具函数</span>
+│   └── index.ts          <span class="comment"># 共享模块入口</span>
 ├── <span class="dir">server/</span>             <span class="comment"># 服务端</span>
 │   ├── <span class="dir">repositories/</span>      <span class="comment"># 数据访问层</span>
 │   ├── <span class="dir">services/</span>          <span class="comment"># 业务逻辑层</span>
 │   ├── TlsServer.ts       <span class="comment"># TLS 服务器</span>
 │   ├── AuthManager.ts     <span class="comment"># 认证管理</span>
-│   └── ...
+│   ├── Database.ts        <span class="comment"># 数据库管理</span>
+│   ├── UserManager.ts      <span class="comment"># 用户管理</span>
+│   ├── RoomManager.ts      <span class="comment"># 房间管理</span>
+│   ├── MessageRouter.ts    <span class="comment"># 消息路由</span>
+│   ├── HeartbeatService.ts <span class="comment"># 心跳服务</span>
+│   ├── FileTransferHandler.ts <span class="comment"># 文件传输处理</span>
+│   ├── ClientConnection.ts <span class="comment"># 客户端连接管理</span>
+│   └── index.ts          <span class="comment"># 服务端入口</span>
 ├── <span class="dir">client/</span>             <span class="comment"># 客户端</span>
 │   ├── <span class="dir">components/</span>         <span class="comment"># TUI 组件</span>
 │   ├── ChatClient.ts      <span class="comment"># 核心客户端</span>
-│   └── ...
+│   ├── AuthClient.ts       <span class="comment"># 认证客户端</span>
+│   ├── CommandHandler.ts   <span class="comment"># 命令处理</span>
+│   ├── FileTransferClient.ts <span class="comment"># 文件传输客户端</span>
+│   ├── TuiManager.ts      <span class="comment"># TUI 管理器</span>
+│   ├── TlsTransport.ts    <span class="comment"># TLS 传输层</span>
+│   ├── Transport.ts       <span class="comment"># 传输接口</span>
+│   ├── LocalStore.ts       <span class="comment"># 本地存储</span>
+│   └── index.ts          <span class="comment"># 客户端入口</span>
 └── <span class="dir">p2p/</span>                <span class="comment"># P2P 预留模块</span></pre>
                 </div>
                 
@@ -999,7 +1015,7 @@ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
                 
                 <ul class="docs-list">
                     <li>
-                        <a href="protocol.html" class="doc-card">
+                        <a href="doc.html?file=protocol.md" class="doc-card">
                             <span class="doc-icon" aria-hidden="true">📄</span>
                             <div class="doc-info">
                                 <h4>通信协议文档</h4>
@@ -1008,7 +1024,43 @@ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
                         </a>
                     </li>
                     <li>
-                        <a href="README.md" class="doc-card">
+                        <a href="doc.html?file=api/index.md" class="doc-card">
+                            <span class="doc-icon" aria-hidden="true">📚</span>
+                            <div class="doc-info">
+                                <h4>API 文档总览</h4>
+                                <p>完整 API 文档索引与快速导航</p>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="doc.html?file=api/client-api.md" class="doc-card">
+                            <span class="doc-icon" aria-hidden="true">💻</span>
+                            <div class="doc-info">
+                                <h4>客户端 API 文档</h4>
+                                <p>客户端核心 API 与使用指南</p>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="doc.html?file=api/server-api.md" class="doc-card">
+                            <span class="doc-icon" aria-hidden="true">🖥️</span>
+                            <div class="doc-info">
+                                <h4>服务端 API 文档</h4>
+                                <p>服务端核心 API 与架构说明</p>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="doc.html?file=api/shared-api.md" class="doc-card">
+                            <span class="doc-icon" aria-hidden="true">🔗</span>
+                            <div class="doc-info">
+                                <h4>Shared API 文档</h4>
+                                <p>共享模块 API 与工具函数</p>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="doc.html?file=README.md" class="doc-card">
                             <span class="doc-icon" aria-hidden="true">📖</span>
                             <div class="doc-info">
                                 <h4>README 文档</h4>
@@ -1017,7 +1069,7 @@ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
                         </a>
                     </li>
                     <li>
-                        <a href="LICENSE" class="doc-card">
+                        <a href="doc.html?file=LICENSE" class="doc-card">
                             <span class="doc-icon" aria-hidden="true">📜</span>
                             <div class="doc-info">
                                 <h4>MIT 许可证</h4>
@@ -1035,9 +1087,11 @@ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
             <div class="footer-links">
                 <a href="https://github.com/Mercury-Ghost/LanChat-CLI" class="footer-link" aria-label="访问 GitHub 仓库">GitHub</a>
                 <span class="footer-divider">·</span>
-                <a href="protocol.html" class="footer-link">协议文档</a>
+                <a href="doc.html?file=protocol.md" class="footer-link">协议文档</a>
                 <span class="footer-divider">·</span>
-                <a href="README.md" class="footer-link">README</a>
+                <a href="doc.html?file=README.md" class="footer-link">README</a>
+                <span class="footer-divider">·</span>
+                <a href="doc.html?file=api/index.md" class="footer-link">API 文档</a>
             </div>
             <div class="footer-bottom">
                 <p>&copy; 2024 LanChat CLI. 使用 MIT 许可证开源。</p>

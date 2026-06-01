@@ -8,10 +8,6 @@ logs/
 .DS_Store
 *.db-shm
 *.db-wal
-coverage/
-__tests__/
-jest.config.js
-.trae/
 
 # 证书私钥
 certs/server.key
