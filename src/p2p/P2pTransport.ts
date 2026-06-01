@@ -4,28 +4,28 @@ export class P2pTransport extends BaseTransport {
   private peerId: string = '';
   private connectedPeers: Map<string, unknown> = new Map();
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async connect(host: string, port: number): Promise<void> {
     throw new Error('P2P 连接暂未实现');
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   send(data: Buffer): void {
-    if (!this.isConnected) {
+    if (!this.isConnected()) {
       throw new Error('未连接到任何对等节点');
-    }
-
-    for (const peer of this.connectedPeers.values()) {
     }
   }
 
   close(): void {
     this.connectedPeers.clear();
-    this.isConnected = false;
+    this.isSocketConnected = false;
   }
 
   async discoverPeers(): Promise<string[]> {
     return [];
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async connectToPeer(peerId: string): Promise<void> {
     throw new Error('P2P 连接暂未实现');
   }

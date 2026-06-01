@@ -25,7 +25,7 @@ export class RoomManager {
       this.rooms.set(DEFAULT_ROOM_NAME, new Set());
     }
 
-    let defaultRoom = this.roomRepo.findByName(DEFAULT_ROOM_NAME);
+    const defaultRoom = this.roomRepo.findByName(DEFAULT_ROOM_NAME);
     if (!defaultRoom) {
       this.roomRepo.create(DEFAULT_ROOM_NAME, null);
     }

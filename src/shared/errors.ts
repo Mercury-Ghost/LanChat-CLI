@@ -12,6 +12,7 @@ export enum ErrorCode {
   USER_NOT_FOUND = 'USER_NOT_FOUND',
   ALREADY_IN_ROOM = 'ALREADY_IN_ROOM',
   CANNOT_LEAVE_DEFAULT_ROOM = 'CANNOT_LEAVE_DEFAULT_ROOM',
+  RESOURCE_LIMIT_EXCEEDED = 'RESOURCE_LIMIT_EXCEEDED',
 }
 
 export class AppError extends Error {
@@ -53,6 +54,13 @@ export class InternalError extends AppError {
   }
 }
 
+export class ResourceLimitError extends AppError {
+  constructor(message: string = '资源限制已达上限') {
+    super(ErrorCode.RESOURCE_LIMIT_EXCEEDED, message, 429);
+    this.name = 'ResourceLimitError';
+  }
+}
+
 export function getErrorMessage(code: ErrorCode): string {
   const messages: Record<ErrorCode, string> = {
     [ErrorCode.AUTH_FAILED]: '登录/令牌验证失败',
@@ -68,6 +76,7 @@ export function getErrorMessage(code: ErrorCode): string {
     [ErrorCode.USER_NOT_FOUND]: '用户不存在',
     [ErrorCode.ALREADY_IN_ROOM]: '已在该房间中',
     [ErrorCode.CANNOT_LEAVE_DEFAULT_ROOM]: '不能离开默认房间',
+    [ErrorCode.RESOURCE_LIMIT_EXCEEDED]: '资源限制已达上限',
   };
   return messages[code] || '未知错误';
 }

@@ -7,13 +7,9 @@ import { FileTransferHandler } from '../FileTransferHandler';
 import { UserManager } from '../UserManager';
 import {
   FileRequestPayload,
-  FileResponsePayload,
-  FileChunkPayload,
-  FileEndPayload,
-  FileProgressPayload,
 } from '../../shared/protocol/types';
-import { MAX_FILE_SIZE, CHUNK_SIZE } from '../../shared/constants';
-import { ValidationError, NotFoundError } from '../../shared/errors';
+import { MAX_FILE_SIZE, MAX_USER_TRANSFERS, MAX_GLOBAL_TRANSFERS } from '../../shared/constants';
+import { ValidationError, NotFoundError, ResourceLimitError } from '../../shared/errors';
 
 export interface FileTransferSession {
   transferId: string;
@@ -48,6 +44,28 @@ export class FileService {
     this.logger = logger;
   }
 
+  private validateTransferLimits(senderId: number): void {
+    let activeSessionCount = 0;
+    let userSessionCount = 0;
+
+    for (const session of this.sessions.values()) {
+      if (session.status === 'pending' || session.status === 'accepted') {
+        activeSessionCount++;
+        if (session.senderId === senderId) {
+          userSessionCount++;
+        }
+      }
+    }
+
+    if (activeSessionCount >= MAX_GLOBAL_TRANSFERS) {
+      throw new ResourceLimitError(`全局传输数已达上限: ${MAX_GLOBAL_TRANSFERS}`);
+    }
+
+    if (userSessionCount >= MAX_USER_TRANSFERS) {
+      throw new ResourceLimitError(`用户并发传输数已达上限: ${MAX_USER_TRANSFERS}`);
+    }
+  }
+
   initiateTransfer(
     request: FileRequestPayload,
     senderId: number
@@ -57,6 +75,8 @@ export class FileService {
         `文件大小必须在 1 字节到 ${Math.round(MAX_FILE_SIZE / 1024 / 1024)} MB 之间`
       );
     }
+
+    this.validateTransferLimits(senderId);
 
     const transferId = uuid.v4();
 
@@ -139,21 +159,21 @@ export class FileService {
     this.logger.info('文件传输已拒绝', { transferId, receiverId, reason });
   }
 
-  receiveChunk(transferId: string, chunkIndex: number, data: Buffer): void {
-    this.fileTransferHandler.receiveChunk(transferId, chunkIndex, data);
+  async receiveChunk(transferId: string, chunkIndex: number, data: Buffer): Promise<void> {
+    await this.fileTransferHandler.receiveChunk(transferId, chunkIndex, data);
 
     const progress = this.fileTransferHandler.getProgress(transferId);
     this.logger.debug('文件块接收进度', { transferId, chunkIndex, progress });
   }
 
-  completeTransfer(transferId: string): string {
+  async completeTransfer(transferId: string): Promise<string> {
     const session = this.sessions.get(transferId);
     if (!session) {
       throw new ValidationError('传输会话不存在');
     }
 
     session.status = 'completed';
-    const storedPath = this.fileTransferHandler.completeTransfer(transferId);
+    const storedPath = await this.fileTransferHandler.completeTransfer(transferId);
 
     this.fileRepo.updateStoredPath(transferId, storedPath!);
     this.sessions.delete(transferId);

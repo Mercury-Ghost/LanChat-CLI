@@ -296,7 +296,8 @@ export class FileTransferClient {
    * 
    * @param payload - 进度数据
    */
-  handleFileProgress(_payload: Buffer): void {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  handleFileProgress(payload: Buffer): void {
     // 服务端进度更新处理
   }
 

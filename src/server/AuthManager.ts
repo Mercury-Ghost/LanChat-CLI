@@ -35,7 +35,7 @@ export class AuthManager {
     }
 
     const hashedPassword = await this.hashPassword(password);
-    const userId = this.userRepo.create(nickname, hashedPassword);
+    this.userRepo.create(nickname, hashedPassword);
 
     return;
   }

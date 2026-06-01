@@ -127,33 +127,33 @@ class LanChatClient {
       
       const onData = (char: string) => {
         switch (char) {
-          case '\n':
-          case '\r':
-          case '\u0004':
-            if (process.stdin.isTTY) {
-              process.stdin.setRawMode(false);
-            }
-            process.stdin.pause();
-            process.stdin.removeListener('data', onData);
-            process.stdout.write('\n');
-            resolve(password);
-            break;
-          case '\u0003':
-            process.exit();
-            break;
-          case '\u007F':
-          case '\b':
-            if (password.length > 0) {
-              password = password.slice(0, -1);
-              process.stdout.clearLine(0);
-              process.stdout.cursorTo(0);
-              process.stdout.write(`${question}: ${'*'.repeat(password.length)}`);
-            }
-            break;
-          default:
-            password += char;
-            process.stdout.write('*');
-            break;
+        case '\n':
+        case '\r':
+        case '\u0004':
+          if (process.stdin.isTTY) {
+            process.stdin.setRawMode(false);
+          }
+          process.stdin.pause();
+          process.stdin.removeListener('data', onData);
+          process.stdout.write('\n');
+          resolve(password);
+          break;
+        case '\u0003':
+          process.exit();
+          break;
+        case '\u007F':
+        case '\b':
+          if (password.length > 0) {
+            password = password.slice(0, -1);
+            process.stdout.clearLine(0);
+            process.stdout.cursorTo(0);
+            process.stdout.write(`${question}: ${'*'.repeat(password.length)}`);
+          }
+          break;
+        default:
+          password += char;
+          process.stdout.write('*');
+          break;
         }
       };
       

@@ -1,5 +1,4 @@
 import tls from 'tls';
-import { EventEmitter } from 'events';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -83,8 +82,8 @@ export class TlsTransport extends BaseTransport {
     return new Promise((resolve, reject) => {
       const options: tls.ConnectionOptions = {
         rejectUnauthorized: false,
-        checkServerIdentity: (servername, cert) => {
-          return this.verifyCertificate(cert);
+        checkServerIdentity: () => {
+          return this.verifyCertificate();
         },
       };
 
@@ -126,7 +125,7 @@ export class TlsTransport extends BaseTransport {
    * 
    * @description 检查服务器证书指纹是否与已知主机匹配，防止中间人攻击
    */
-  private verifyCertificate(cert: tls.PeerCertificate): Error | undefined {
+  private verifyCertificate(): Error | undefined {
     const fingerprint = this.getRemoteFingerprint();
     const hostKey = `${this.host}:${this.port}`;
 

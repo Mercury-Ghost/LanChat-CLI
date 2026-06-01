@@ -104,7 +104,8 @@ export class TuiManager {
    * 更新房间列表显示
    * @param rooms - 房间列表
    */
-  updateRoomList(_rooms: RoomInfo[]): void {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  updateRoomList(rooms: RoomInfo[]): void {
     this.screen.render();
   }
 

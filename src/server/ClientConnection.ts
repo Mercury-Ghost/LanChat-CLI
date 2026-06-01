@@ -10,7 +10,7 @@ import { AuthManager } from './AuthManager';
 import { UserManager } from './UserManager';
 import { RoomManager } from './RoomManager';
 import { HeartbeatService } from './HeartbeatService';
-import { AuthenticatedUser, UserListMessage } from '../shared/protocol/types';
+import { AuthenticatedUser } from '../shared/protocol/types';
 
 export class ClientConnection extends EventEmitter {
   private socket: Socket;
@@ -84,19 +84,21 @@ export class ClientConnection extends EventEmitter {
     this.socket.setTimeout(30000);
   }
 
-  private handleData(data: Buffer): void {
+  private async handleData(data: Buffer): Promise<void> {
     this.receiveBuffer = Buffer.concat([this.receiveBuffer, data]);
     this.resetHeartbeatTimeout();
-    this.processBuffer();
+    this.processBuffer().catch((error) => {
+      this.logger.error('处理数据失败', { socketId: this.socketId, error });
+    });
   }
 
-  private processBuffer(): void {
+  private async processBuffer(): Promise<void> {
     try {
       const { messages, remaining } = MessageCodec.parseStream(this.receiveBuffer);
       this.receiveBuffer = remaining;
 
       for (const message of messages) {
-        this.handleMessage(message);
+        await this.handleMessage(message);
       }
     } catch (error) {
       this.logger.error('消息解析错误', { socketId: this.socketId, error });
@@ -104,9 +106,9 @@ export class ClientConnection extends EventEmitter {
     }
   }
 
-  private handleMessage(message: { type: MessageType; payload: Buffer }): void {
+  private async handleMessage(message: { type: MessageType; payload: Buffer }): Promise<void> {
     try {
-      this.messageRouter.route(this.socketId, this.authenticatedUser, message.type, message.payload);
+      await this.messageRouter.route(this.socketId, this.authenticatedUser, message.type, message.payload);
     } catch (error) {
       this.logger.error('消息处理错误', { socketId: this.socketId, error });
     }

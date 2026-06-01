@@ -174,56 +174,56 @@ export class ChatClient extends EventEmitter {
       const { type, payload } = MessageCodec.decode(buffer);
 
       switch (type) {
-        case MessageType.LOGIN_RESPONSE:
-          this.handleLoginResponse(payload);
-          break;
+      case MessageType.LOGIN_RESPONSE:
+        this.handleLoginResponse(payload);
+        break;
 
-        case MessageType.REGISTER_RESPONSE:
-          this.handleRegisterResponse(payload);
-          break;
+      case MessageType.REGISTER_RESPONSE:
+        this.handleRegisterResponse(payload);
+        break;
 
-        case MessageType.CHAT_ROOM:
-          this.handleChatRoom(payload);
-          break;
+      case MessageType.CHAT_ROOM:
+        this.handleChatRoom(payload);
+        break;
 
-        case MessageType.CHAT_PRIVATE:
-          this.handleChatPrivate(payload);
-          break;
+      case MessageType.CHAT_PRIVATE:
+        this.handleChatPrivate(payload);
+        break;
 
-        case MessageType.CHAT_SYSTEM:
-          this.handleChatSystem(payload);
-          break;
+      case MessageType.CHAT_SYSTEM:
+        this.handleChatSystem(payload);
+        break;
 
-        case MessageType.USER_LIST:
-          this.handleUserList(payload);
-          break;
+      case MessageType.USER_LIST:
+        this.handleUserList(payload);
+        break;
 
-        case MessageType.ROOM_LIST:
-          this.handleRoomList(payload);
-          break;
+      case MessageType.ROOM_LIST:
+        this.handleRoomList(payload);
+        break;
 
-        case MessageType.ERROR:
-          this.handleError(payload);
-          break;
+      case MessageType.ERROR:
+        this.handleError(payload);
+        break;
 
-        case MessageType.FILE_RESPONSE:
-          this.fileTransferClient.handleFileResponse(payload);
-          break;
+      case MessageType.FILE_RESPONSE:
+        this.fileTransferClient.handleFileResponse(payload);
+        break;
 
-        case MessageType.FILE_CHUNK:
-          this.fileTransferClient.handleFileChunk(payload);
-          break;
+      case MessageType.FILE_CHUNK:
+        this.fileTransferClient.handleFileChunk(payload);
+        break;
 
-        case MessageType.FILE_END:
-          this.fileTransferClient.handleFileEnd(payload);
-          break;
+      case MessageType.FILE_END:
+        this.fileTransferClient.handleFileEnd(payload);
+        break;
 
-        case MessageType.FILE_PROGRESS:
-          this.fileTransferClient.handleFileProgress(payload);
-          break;
+      case MessageType.FILE_PROGRESS:
+        this.fileTransferClient.handleFileProgress(payload);
+        break;
 
-        default:
-          break;
+      default:
+        break;
       }
     } catch (error) {
       this.emit('error', error);
@@ -339,12 +339,7 @@ export class ChatClient extends EventEmitter {
    */
   private handleUserList(payload: Buffer): void {
     const data = JSON.parse(payload.toString()) as UserListPayload;
-    this.onlineUsers = data.users.map((nickname, index) => ({
-      userId: index,
-      nickname,
-      socketId: '',
-      activeRoom: data.room,
-    }));
+    this.onlineUsers = data.users;
     this.tui?.updateUserList(this.onlineUsers);
   }
 

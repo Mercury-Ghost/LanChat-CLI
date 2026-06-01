@@ -1,3 +1,7 @@
+/**
+ * 消息类型枚举
+ * 定义了客户端与服务器之间通信的所有消息类型
+ */
 export enum MessageType {
   LOGIN_REQUEST = 0x01,
   LOGIN_RESPONSE = 0x02,
@@ -32,11 +36,17 @@ export enum MessageType {
   CHANGE_PASSWORD = 0x40,
 }
 
+/**
+ * 登录请求接口
+ */
 export interface LoginRequest {
   nickname: string;
   password: string;
 }
 
+/**
+ * 登录响应接口
+ */
 export interface LoginResponse {
   success: boolean;
   token?: string;
@@ -45,78 +55,122 @@ export interface LoginResponse {
   error?: string;
 }
 
+/**
+ * 注册请求接口
+ */
 export interface RegisterRequest {
   nickname: string;
   password: string;
 }
 
+/**
+ * 注册响应接口
+ */
 export interface RegisterResponse {
   success: boolean;
   message?: string;
   error?: string;
 }
 
+/**
+ * 断开连接负载接口
+ */
 export interface DisconnectPayload {
   reason?: string;
 }
 
+/**
+ * 错误负载接口
+ */
 export interface ErrorPayload {
   code: string;
   message: string;
 }
 
+/**
+ * 房间信息接口
+ */
 export interface RoomInfo {
   id: number;
   name: string;
   memberCount: number;
 }
 
+/**
+ * 房间列表负载接口
+ */
 export interface RoomListPayload {
   rooms: RoomInfo[];
 }
 
+/**
+ * 用户列表负载接口
+ */
 export interface UserListPayload {
-  room: string;
-  users: string[];
+  users: OnlineUser[];
 }
 
+/**
+ * 加入房间请求接口
+ */
 export interface RoomJoinRequest {
   roomName: string;
   token?: string;
 }
 
+/**
+ * 加入房间响应接口
+ */
 export interface RoomJoinResponse {
   roomName?: string;
   success: boolean;
   error?: string;
 }
 
+/**
+ * 离开房间请求接口
+ */
 export interface RoomLeaveRequest {
   roomName: string;
   token?: string;
 }
 
+/**
+ * 用户加入房间负载接口
+ */
 export interface UserJoinedPayload {
   nickname: string;
   room: string;
 }
 
+/**
+ * 用户离开房间负载接口
+ */
 export interface UserLeftPayload {
   nickname: string;
   room: string;
 }
 
+/**
+ * 昵称修改请求接口
+ */
 export interface NickChangeRequest {
   newNickname: string;
   token?: string;
 }
 
+/**
+ * 昵称修改响应接口
+ */
 export interface NickChangeResponse {
   success: boolean;
   newNickname?: string;
   error?: string;
 }
 
+/**
+ * 聊天室消息负载接口
+ */
 export interface ChatRoomPayload {
   room: string;
   text: string;
@@ -125,6 +179,9 @@ export interface ChatRoomPayload {
   token?: string;
 }
 
+/**
+ * 私聊消息负载接口
+ */
 export interface ChatPrivatePayload {
   target: string;
   text: string;
@@ -133,11 +190,17 @@ export interface ChatPrivatePayload {
   token?: string;
 }
 
+/**
+ * 系统消息负载接口
+ */
 export interface ChatSystemPayload {
   text: string;
   timestamp: string;
 }
 
+/**
+ * 历史记录请求负载接口
+ */
 export interface HistoryRequestPayload {
   room?: string;
   target?: string;
@@ -146,16 +209,25 @@ export interface HistoryRequestPayload {
   token?: string;
 }
 
+/**
+ * 历史消息接口
+ */
 export interface HistoryMessage {
   sender: string;
   content: string;
   timestamp: string;
 }
 
+/**
+ * 历史记录响应负载接口
+ */
 export interface HistoryResponsePayload {
   messages: HistoryMessage[];
 }
 
+/**
+ * 文件传输请求负载接口
+ */
 export interface FileRequestPayload {
   fileName: string;
   fileSize: number;
@@ -164,6 +236,9 @@ export interface FileRequestPayload {
   token?: string;
 }
 
+/**
+ * 文件传输响应负载接口
+ */
 export interface FileResponsePayload {
   transferId: string;
   accepted: boolean;
@@ -171,41 +246,62 @@ export interface FileResponsePayload {
   reason?: string;
 }
 
+/**
+ * 文件块负载接口
+ */
 export interface FileChunkPayload {
   transferId: string;
   chunkIndex: number;
   data: string;
 }
 
+/**
+ * 修改密码请求接口
+ */
 export interface ChangePasswordRequest {
   oldPassword: string;
   newPassword: string;
   token: string;
 }
 
+/**
+ * 文件传输结束负载接口
+ */
 export interface FileEndPayload {
   transferId: string;
   status: 'success' | 'aborted';
   reason?: string;
 }
 
+/**
+ * 文件传输进度负载接口
+ */
 export interface FileProgressPayload {
   transferId: string;
   receivedBytes: number;
   totalBytes: number;
 }
 
+/**
+ * 通用消息接口
+ */
 export interface Message {
   type: MessageType;
   payload: unknown;
 }
 
+/**
+ * 已认证用户接口
+ */
 export interface AuthenticatedUser {
   userId: number;
   nickname: string;
   token: string;
 }
 
+/**
+ * 在线用户接口
+ */
 export interface OnlineUser {
   userId: number;
   nickname: string;
@@ -213,6 +309,9 @@ export interface OnlineUser {
   activeRoom: string;
 }
 
+/**
+ * 聊天室消息接口
+ */
 export interface ChatRoomMessage {
   room: string;
   sender: string;
@@ -220,16 +319,25 @@ export interface ChatRoomMessage {
   timestamp: string;
 }
 
+/**
+ * 私聊消息接口
+ */
 export interface ChatPrivateMessage {
   from: string;
   text: string;
   timestamp: string;
 }
 
+/**
+ * 房间列表消息接口
+ */
 export interface RoomListMessage {
   rooms: RoomInfo[];
 }
 
+/**
+ * 用户列表消息接口
+ */
 export interface UserListMessage {
   users: OnlineUser[];
 }

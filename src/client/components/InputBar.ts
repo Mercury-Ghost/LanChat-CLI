@@ -46,7 +46,7 @@ export class InputBar {
     this.input.clearValue();
   }
 
-  setCompletions(_completions: string[]): void {
+  setCompletions(): void {
   }
 
   getInput(): Widgets.TextboxElement {

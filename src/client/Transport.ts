@@ -92,16 +92,18 @@ export class BaseTransport extends EventEmitter implements ITransport {
    * @returns {Promise<void>} 连接成功后 resolve
    * @throws {Error} 连接失败时抛出错误
    */
-  async connect(_host: string, _port: number): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async connect(host: string, port: number): Promise<void> {
     throw new Error('方法未实现: connect');
   }
 
   /**
    * 发送数据
    * 
-   * @param _data - 要发送的数据缓冲区
+   * @param data - 要发送的数据缓冲区
    */
-  send(_data: Buffer): void {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  send(data: Buffer): void {
     if (!this.isSocketConnected) {
       throw new Error('未连接到服务器');
     }

@@ -63,17 +63,17 @@ export class ChatWindow {
     let line: string;
 
     switch (message.type) {
-      case 'system':
-        line = `{green-fg}[${time}] ** ${message.content}{/green-fg}`;
-        break;
-      case 'private':
-        line = `{yellow-fg}[${time}] [PM from ${message.sender}] ${message.content}{/yellow-fg}`;
-        break;
-      case 'room':
-        line = `{white-fg}[${time}] <${message.sender}> ${message.content}{/white-fg}`;
-        break;
-      default:
-        line = `{grey-fg}[${time}] ${message.content}{/grey-fg}`;
+    case 'system':
+      line = `{green-fg}[${time}] ** ${message.content}{/green-fg}`;
+      break;
+    case 'private':
+      line = `{yellow-fg}[${time}] [PM from ${message.sender}] ${message.content}{/yellow-fg}`;
+      break;
+    case 'room':
+      line = `{white-fg}[${time}] <${message.sender}> ${message.content}{/white-fg}`;
+      break;
+    default:
+      line = `{grey-fg}[${time}] ${message.content}{/grey-fg}`;
     }
 
     const currentContent = this.scrollable.getContent();

@@ -129,7 +129,8 @@ class Database {
   }
 
   transaction<T>(fn: () => T): T {
-    return this.connection.transaction(fn);
+    const tx = this.connection.transaction(fn) as () => T;
+    return tx();
   }
 
   close(): void {
@@ -137,5 +138,5 @@ class Database {
   }
 }
 
-export { Database as DatabaseClass, Database as Database };
+export { Database };
 export default Database;

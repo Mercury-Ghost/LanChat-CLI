@@ -4,6 +4,8 @@ import { DEFAULT_ROOM_NAME } from '../shared/constants';
 
 export class UserManager {
   private users: Map<string, OnlineUser> = new Map();
+  private userIdIndex: Map<number, OnlineUser> = new Map();
+  private nicknameIndex: Map<string, string> = new Map();
   private logger: Logger;
 
   constructor(logger: Logger) {
@@ -19,6 +21,8 @@ export class UserManager {
     };
 
     this.users.set(socketId, user);
+    this.userIdIndex.set(userId, user);
+    this.nicknameIndex.set(nickname, socketId);
     this.logger.info('用户上线', { socketId, nickname, userId });
 
     return user;
@@ -28,6 +32,8 @@ export class UserManager {
     const user = this.users.get(socketId);
     if (user) {
       this.users.delete(socketId);
+      this.userIdIndex.delete(user.userId);
+      this.nicknameIndex.delete(user.nickname);
       this.logger.info('用户离线', { socketId, nickname: user.nickname });
     }
     return user;
@@ -38,12 +44,12 @@ export class UserManager {
   }
 
   getUserByNickname(nickname: string): OnlineUser | undefined {
-    for (const user of this.users.values()) {
-      if (user.nickname === nickname) {
-        return user;
-      }
-    }
-    return undefined;
+    const socketId = this.nicknameIndex.get(nickname);
+    return socketId ? this.users.get(socketId) : undefined;
+  }
+
+  getUserByUserId(userId: number): OnlineUser | undefined {
+    return this.userIdIndex.get(userId);
   }
 
   updateNickname(socketId: string, newNickname: string): boolean {
@@ -52,13 +58,15 @@ export class UserManager {
       return false;
     }
 
-    const existingUser = this.getUserByNickname(newNickname);
-    if (existingUser && existingUser.socketId !== socketId) {
+    const existingSocketId = this.nicknameIndex.get(newNickname);
+    if (existingSocketId && existingSocketId !== socketId) {
       return false;
     }
 
     const oldNickname = user.nickname;
+    this.nicknameIndex.delete(oldNickname);
     user.nickname = newNickname;
+    this.nicknameIndex.set(newNickname, socketId);
     this.logger.info('用户改名', { socketId, oldNickname, newNickname });
 
     return true;
@@ -89,12 +97,8 @@ export class UserManager {
   }
 
   isNicknameTaken(nickname: string, excludeSocketId?: string): boolean {
-    for (const user of this.users.values()) {
-      if (user.nickname === nickname && user.socketId !== excludeSocketId) {
-        return true;
-      }
-    }
-    return false;
+    const socketId = this.nicknameIndex.get(nickname);
+    return socketId !== undefined && socketId !== excludeSocketId;
   }
 
   getOnlineUsers(): OnlineUser[] {
@@ -115,7 +119,6 @@ export class UserManager {
   }
 
   getSocketIdByNickname(nickname: string): string | undefined {
-    const user = this.getUserByNickname(nickname);
-    return user?.socketId;
+    return this.nicknameIndex.get(nickname);
   }
 }

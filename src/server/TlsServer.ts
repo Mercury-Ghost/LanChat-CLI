@@ -3,7 +3,7 @@ import { Socket } from 'net';
 import { Database } from './Database';
 import { ClientConnection } from './ClientConnection';
 import { Logger } from 'winston';
-import { CERT_PATH, KEY_PATH, SERVER_PORT } from '../shared/constants';
+import { CERT_PATH, KEY_PATH, SERVER_PORT, MAX_CONNECTIONS } from '../shared/constants';
 import * as fs from 'fs';
 import * as path from 'path';
 import { RoomManager } from './RoomManager';
@@ -75,6 +75,16 @@ export class TlsServer {
   private handleConnection(socket: Socket): void {
     const socketId = `${socket.remoteAddress}:${socket.remotePort}`;
 
+    if (this.connections.size >= MAX_CONNECTIONS) {
+      this.logger.warn('连接数已达上限，拒绝新连接', {
+        socketId,
+        currentConnections: this.connections.size,
+        maxConnections: MAX_CONNECTIONS
+      });
+      socket.end();
+      return;
+    }
+
     const connection = new ClientConnection(
       socket,
       socketId,
@@ -87,11 +97,11 @@ export class TlsServer {
     );
     this.connections.set(socketId, connection);
 
-    this.logger.info('新连接', { socketId });
+    this.logger.info('新连接', { socketId, currentConnections: this.connections.size, maxConnections: MAX_CONNECTIONS });
 
     connection.on('close', () => {
       this.connections.delete(socketId);
-      this.logger.info('连接关闭', { socketId });
+      this.logger.info('连接关闭', { socketId, currentConnections: this.connections.size });
     });
   }
 

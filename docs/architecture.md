@@ -137,7 +137,7 @@ LanChat CLI/
 | `0x20` | `CHAT_ROOM`        | C→S / S→C | 房间消息，Payload: `{ room: string, text: string, timestamp: string, sender: string }` |
 | `0x21` | `CHAT_PRIVATE`     | C→S / S→C | 私聊消息，Payload: `{ target: string, text: string, timestamp: string, sender: string }` |
 | `0x22` | `CHAT_SYSTEM`      | S→C       | 系统通知（加入、离开、改名等），Payload: `{ text: string, timestamp: string }` |
-| `0x23` | `HISTORY_REQUEST`  | C→S       | 请求历史消息，Payload: `{ room?: string, type?: 'room'\|'private', count?: number }` |
+| `0x23` | `HISTORY_REQUEST`  | C→S       | 请求历史消息，Payload: `{ room?: string, type?: 'room'|'private', count?: number }` |
 | `0x24` | `HISTORY_RESPONSE` | S→C       | 返回历史消息数组，Payload: `{ messages: Array<{ sender: string, content: string, timestamp: string }> }` |
 
 #### 4.3.4 文件传输
@@ -147,7 +147,7 @@ LanChat CLI/
 | `0x30` | `FILE_REQUEST`  | C→S        | 发送文件请求，Payload: `{ fileName: string, fileSize: number, targetUser?: string, room?: string }` |
 | `0x31` | `FILE_RESPONSE` | S→C 或 C→S | 接受/拒绝/续传信息，Payload: `{ transferId: string, accepted: boolean, nextChunkIndex?: number, reason?: string }` |
 | `0x32` | `FILE_CHUNK`    | C→S / S→C  | 文件数据块，二进制布局：`transferId(32字节ASCII字符串) + chunkIndex(4字节无符号整数) + 数据` |
-| `0x33` | `FILE_END`      | 双向       | 传输结束通知，Payload: `{ transferId: string, status: 'success'\|'aborted', reason?: string }` |
+| `0x33` | `FILE_END`      | 双向       | 传输结束通知，Payload: `{ transferId: string, status: 'success'|'aborted', reason?: string }` |
 | `0x34` | `FILE_PROGRESS` | S→C        | 传输进度更新，Payload: `{ transferId: string, receivedBytes: number, totalBytes: number }` |
 
 ### 4.4 文件传输与断点续传流程

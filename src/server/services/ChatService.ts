@@ -6,13 +6,12 @@ import { Logger } from 'winston';
 import { MessageRepo } from '../repositories/MessageRepo';
 import { RoomRepo } from '../repositories/RoomRepo';
 import { UserRepo } from '../repositories/UserRepo';
-import { DEFAULT_HISTORY_COUNT, DEFAULT_ROOM_NAME } from '../../shared/constants';
+import { DEFAULT_HISTORY_COUNT } from '../../shared/constants';
 import {
-  ChatRoomPayload,
-  ChatPrivatePayload,
   HistoryMessage,
   ChatRoomMessage,
   ChatPrivateMessage,
+  ChatSystemPayload,
   MessageType,
 } from '../../shared/protocol/types';
 import { ValidationError } from '../../shared/errors';
@@ -74,7 +73,7 @@ export class ChatService {
       MessageCodec.encodeJson(MessageType.CHAT_ROOM, chatMessage)
     );
 
-    this.logger.debug('房间消息发送', { roomName, senderId, senderNickname, content });
+    this.logger.debug('房间消息发送', { roomName, senderId, senderNickname });
 
     return messageId;
   }
@@ -107,7 +106,7 @@ export class ChatService {
       targetConnection.sendMessage(MessageType.CHAT_PRIVATE, chatMessage);
     }
 
-    this.logger.debug('私聊消息发送', { senderId, senderNickname, targetNickname, content });
+    this.logger.debug('私聊消息发送', { senderId, senderNickname, targetNickname });
 
     return messageId;
   }
@@ -164,5 +163,17 @@ export class ChatService {
     }
 
     this.messageRepo.createRoomMessage(room.id, 0, content, 'system');
+
+    const systemMessage: ChatSystemPayload = {
+      text: content,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.server.broadcastToRoom(
+      roomName,
+      MessageCodec.encodeJson(MessageType.CHAT_SYSTEM, systemMessage)
+    );
+
+    this.logger.debug('系统消息发送', { roomName });
   }
 }
