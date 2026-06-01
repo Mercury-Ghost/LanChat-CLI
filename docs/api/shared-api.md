@@ -82,7 +82,7 @@ const buffer = MessageCodec.encodeJson(MessageType.CHAT_ROOM, payload);
 
 | 常量名 | 类型 | 默认值 | 说明 |
 |--------|------|--------|------|
-| `JWT_SECRET` | `string` | - | JWT 签名密钥（必需配置） |
+| `JWT_SECRET` | `string` | - | JWT 签名密钥（所有环境下必需配置） |
 | `JWT_EXPIRES_IN` | `number` | `86400` | JWT 有效期（秒，24小时） |
 
 ### 3.3 Argon2 配置
@@ -139,23 +139,6 @@ const buffer = MessageCodec.encodeJson(MessageType.CHAT_ROOM, payload);
 | 常量名 | 类型 | 默认值 | 说明 |
 |--------|------|--------|------|
 | `DEFAULT_ROOM_NAME` | `string` | `'#general'` | 默认房间名称 |
-
-### 3.9 辅助函数
-
-#### `isUsingDefaultJwtSecret()`
-
-检查是否正在使用默认的 JWT 密钥。
-
-**返回值：** `boolean` - 如果使用默认密钥返回 `true`
-
-**示例：**
-```typescript
-import { isUsingDefaultJwtSecret } from './shared';
-
-if (isUsingDefaultJwtSecret()) {
-  console.warn('警告：请在生产环境中设置自定义 JWT_SECRET');
-}
-```
 
 ---
 
@@ -1959,7 +1942,6 @@ export {
   SERVER_PORT,
   JWT_SECRET,
   JWT_EXPIRES_IN,
-  isUsingDefaultJwtSecret,
   DB_PATH,
   FILES_DIR,
   CERT_PATH,

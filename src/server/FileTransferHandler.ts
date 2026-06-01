@@ -21,6 +21,8 @@ export class FileTransferHandler {
   private fileRepo: FileRepo;
   private logger: Logger;
   private readonly MAX_FILENAME_LENGTH = 255;
+  private readonly allowedDirectories: string[];
+  private readonly baseDir: string;
 
   private validateAndSanitizeFileName(fileName: string): string {
     if (!fileName || fileName.trim().length === 0) {
@@ -46,20 +48,44 @@ export class FileTransferHandler {
     return sanitizedFileName;
   }
 
+  private validateAndNormalizePath(filePath: string, allowedDir: string): string {
+    const normalizedPath = path.normalize(filePath);
+    const resolvedAllowedDir = path.resolve(allowedDir);
+    const resolvedFilePath = path.resolve(normalizedPath);
+
+    if (!resolvedFilePath.startsWith(resolvedAllowedDir + path.sep) && resolvedFilePath !== resolvedAllowedDir) {
+      throw new ValidationError('无效的文件路径，路径遍历攻击检测');
+    }
+
+    return resolvedFilePath;
+  }
+
+  private getSafeTempFilePath(transferId: string): string {
+    const tempDir = path.join(this.baseDir, 'temp');
+    const tempFilePath = path.join(tempDir, `${transferId}.tmp`);
+    return this.validateAndNormalizePath(tempFilePath, this.baseDir);
+  }
+
+  private getSafeFinalFilePath(transferId: string, fileName: string): string {
+    const finalFilePath = path.join(this.baseDir, `${transferId}_${fileName}`);
+    return this.validateAndNormalizePath(finalFilePath, this.baseDir);
+  }
+
   constructor(database: Database, logger: Logger) {
     this.database = database;
     this.fileRepo = new FileRepo(database);
     this.logger = logger;
+    this.baseDir = path.resolve(FILES_DIR);
+    this.allowedDirectories = [this.baseDir, path.join(this.baseDir, 'temp')];
 
     this.ensureDirectories();
   }
 
   private ensureDirectories(): void {
-    const filesDir = path.resolve(FILES_DIR);
-    const tempDir = path.join(filesDir, 'temp');
+    const tempDir = path.join(this.baseDir, 'temp');
 
-    if (!fs.existsSync(filesDir)) {
-      fs.mkdirSync(filesDir, { recursive: true });
+    if (!fs.existsSync(this.baseDir)) {
+      fs.mkdirSync(this.baseDir, { recursive: true });
     }
 
     if (!fs.existsSync(tempDir)) {
@@ -114,7 +140,7 @@ export class FileTransferHandler {
 
     this.activeTransfers.set(transferId, metadata);
 
-    const tempFilePath = path.join(FILES_DIR, 'temp', `${transferId}.tmp`);
+    const tempFilePath = this.getSafeTempFilePath(transferId);
     const writeStream = fs.createWriteStream(tempFilePath);
 
     const tempFile: TempFile = {
@@ -209,8 +235,8 @@ export class FileTransferHandler {
       throw new Error(`Write stream error: ${tempFile.error.message}`);
     }
 
-    const tempFilePath = path.join(FILES_DIR, 'temp', `${transferId}.tmp`);
-    const finalFilePath = path.join(FILES_DIR, `${transferId}_${transfer.fileName}`);
+    const tempFilePath = this.getSafeTempFilePath(transferId);
+    const finalFilePath = this.getSafeFinalFilePath(transferId, transfer.fileName);
 
     await new Promise<void>((resolve, reject) => {
       tempFile.writeStream.on('error', reject);
@@ -248,7 +274,7 @@ export class FileTransferHandler {
   abortTransfer(transferId: string): void {
     const transfer = this.activeTransfers.get(transferId);
     if (transfer) {
-      const tempFilePath = path.join(FILES_DIR, 'temp', `${transferId}.tmp`);
+      const tempFilePath = this.getSafeTempFilePath(transferId);
       if (fs.existsSync(tempFilePath)) {
         fs.unlinkSync(tempFilePath);
       }
@@ -283,7 +309,7 @@ export class FileTransferHandler {
   }
 
   cleanupOldTempFiles(): void {
-    const tempDir = path.join(FILES_DIR, 'temp');
+    const tempDir = path.join(this.baseDir, 'temp');
     const maxAge = TEMP_FILE_RETENTION_HOURS * 60 * 60 * 1000;
     const now = Date.now();
 
@@ -295,10 +321,11 @@ export class FileTransferHandler {
 
     for (const file of files) {
       const filePath = path.join(tempDir, file);
-      const stats = fs.statSync(filePath);
+      const safeFilePath = this.validateAndNormalizePath(filePath, this.baseDir);
+      const stats = fs.statSync(safeFilePath);
 
       if (now - stats.mtimeMs > maxAge) {
-        fs.unlinkSync(filePath);
+        fs.unlinkSync(safeFilePath);
         this.logger.info('删除过期临时文件', { file });
       }
     }

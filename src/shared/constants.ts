@@ -4,48 +4,19 @@
 export const SERVER_PORT = parseInt(process.env.PORT || '9527', 10);
 
 /**
- * Node.js 运行环境
- */
-const NODE_ENV = process.env.NODE_ENV || 'development';
-
-/**
- * 是否为生产环境
- */
-const isProduction = NODE_ENV === 'production';
-
-/**
- * 默认 JWT 密钥（仅用于开发环境）
- */
-const DEFAULT_JWT_SECRET = 'default_secret_change_in_production';
-
-/**
  * JWT 密钥
- * 生产环境必须通过环境变量 JWT_SECRET 设置
+ * 所有环境都必须通过环境变量 JWT_SECRET 设置
  */
-let jwtSecret: string;
-if (isProduction) {
-  if (!process.env.JWT_SECRET) {
-    throw new Error('JWT_SECRET environment variable is required in production environment');
-  }
-  jwtSecret = process.env.JWT_SECRET;
-} else {
-  jwtSecret = process.env.JWT_SECRET || DEFAULT_JWT_SECRET;
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required in all environments');
 }
 
-export const JWT_SECRET = jwtSecret;
+export const JWT_SECRET = process.env.JWT_SECRET;
 
 /**
  * JWT 令牌过期时间（秒），默认 24 小时
  */
 export const JWT_EXPIRES_IN = 24 * 60 * 60;
-
-/**
- * 检查是否正在使用默认 JWT 密钥
- * @returns 如果使用默认密钥返回 true
- */
-export function isUsingDefaultJwtSecret(): boolean {
-  return JWT_SECRET === DEFAULT_JWT_SECRET;
-}
 
 /**
  * 数据库文件路径

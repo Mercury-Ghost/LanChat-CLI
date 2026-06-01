@@ -3,6 +3,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import dotenv from 'dotenv';
 import { BaseTransport } from './Transport';
 
 /**
@@ -41,6 +42,9 @@ export class TlsTransport extends BaseTransport {
   /** 已知主机指纹存储路径 */
   private knownHostsPath: string;
 
+  /** 是否为开发环境 */
+  private isDev: boolean;
+
   /**
    * 构造函数
    * 
@@ -48,7 +52,9 @@ export class TlsTransport extends BaseTransport {
    */
   constructor() {
     super();
+    dotenv.config();
     this.knownHostsPath = path.join(os.homedir(), '.lanchat', 'known_hosts');
+    this.isDev = process.env.NODE_ENV !== 'production';
     this.ensureKnownHostsDir();
   }
 
@@ -81,21 +87,29 @@ export class TlsTransport extends BaseTransport {
 
     return new Promise((resolve, reject) => {
       const options: tls.ConnectionOptions = {
-        rejectUnauthorized: false,
-        checkServerIdentity: () => {
-          return this.verifyCertificate();
+        rejectUnauthorized: !this.isDev,
+        checkServerIdentity: (hostname, cert) => {
+          return this.verifyCertificate(cert);
         },
       };
 
       this.socket = tls.connect(port, host, options, () => {
-        if (this.socket?.authorized) {
-          console.log('TLS 连接已建立');
-          this.isSocketConnected = true;
-          this.emit('connect');
-          resolve();
-        } else {
-          reject(new Error('TLS 握手失败'));
+        if (!this.socket) {
+          reject(new Error('Socket 未初始化'));
+          return;
         }
+
+        const error = this.verifyCertificate(this.socket.getPeerCertificate());
+        if (error) {
+          reject(error);
+          this.socket?.destroy();
+          return;
+        }
+
+        console.log('TLS 连接已建立');
+        this.isSocketConnected = true;
+        this.emit('connect');
+        resolve();
       });
 
       this.socket.on('data', (data: Buffer) => {
@@ -125,8 +139,8 @@ export class TlsTransport extends BaseTransport {
    * 
    * @description 检查服务器证书指纹是否与已知主机匹配，防止中间人攻击
    */
-  private verifyCertificate(): Error | undefined {
-    const fingerprint = this.getRemoteFingerprint();
+  private verifyCertificate(cert: tls.PeerCertificate): Error | undefined {
+    const fingerprint = this.getFingerprint(cert);
     const hostKey = `${this.host}:${this.port}`;
 
     if (fs.existsSync(this.knownHostsPath)) {
@@ -134,10 +148,16 @@ export class TlsTransport extends BaseTransport {
         const knownHosts = JSON.parse(fs.readFileSync(this.knownHostsPath, 'utf8')) as Record<string, string>;
         const knownFingerprint = knownHosts[hostKey];
 
-        if (knownFingerprint && knownFingerprint !== fingerprint) {
-          const errorMsg = `服务器证书指纹不匹配! 预期: ${knownFingerprint}, 实际: ${fingerprint}`;
-          console.error(errorMsg);
-          return new Error(errorMsg);
+        if (knownFingerprint) {
+          if (knownFingerprint !== fingerprint) {
+            const errorMsg = `服务器证书指纹不匹配! 预期: ${knownFingerprint}, 实际: ${fingerprint}`;
+            console.error(errorMsg);
+            return new Error(errorMsg);
+          }
+        } else {
+          console.log('首次连接到该主机，请验证服务器证书指纹:');
+          console.log(`SHA-256: ${fingerprint}`);
+          console.log('接受此证书? 调用 saveKnownHost() 保存');
         }
       } catch {
         console.warn('警告: known_hosts 文件格式错误，将被覆盖');
@@ -145,8 +165,28 @@ export class TlsTransport extends BaseTransport {
     } else {
       console.log('首次连接，请验证服务器证书指纹:');
       console.log(`SHA-256: ${fingerprint}`);
+      console.log('接受此证书? 调用 saveKnownHost() 保存');
     }
     return undefined;
+  }
+
+  /**
+   * 获取证书指纹
+   * 
+   * @private
+   * @param cert - 服务器证书
+   * @returns {string} SHA-256 证书指纹
+   * 
+   * @description 计算证书的 SHA-256 指纹
+   */
+  private getFingerprint(cert: tls.PeerCertificate): string {
+    if (!cert || !cert.raw) {
+      return '';
+    }
+
+    const sha256 = crypto.createHash('sha256');
+    sha256.update(cert.raw);
+    return sha256.digest('hex');
   }
 
   /**
@@ -192,13 +232,7 @@ export class TlsTransport extends BaseTransport {
     }
 
     const cert = this.socket.getPeerCertificate();
-    if (!cert || !cert.raw) {
-      return '';
-    }
-
-    const sha256 = crypto.createHash('sha256');
-    sha256.update(cert.raw);
-    return sha256.digest('hex');
+    return this.getFingerprint(cert);
   }
 
   /**
@@ -227,6 +261,7 @@ export class TlsTransport extends BaseTransport {
 
     knownHosts[hostKey] = fingerprint;
     fs.writeFileSync(this.knownHostsPath, JSON.stringify(knownHosts, null, 2));
+    console.log(`已保存主机 ${hostKey} 的证书指纹`);
   }
 
   /**

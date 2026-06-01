@@ -11,6 +11,7 @@ import { UserManager } from './UserManager';
 import { RoomManager } from './RoomManager';
 import { HeartbeatService } from './HeartbeatService';
 import { AuthenticatedUser } from '../shared/protocol/types';
+import { RateLimiter } from './RateLimiter';
 
 export class ClientConnection extends EventEmitter {
   private socket: Socket;
@@ -36,7 +37,8 @@ export class ClientConnection extends EventEmitter {
     server: TlsServer,
     authManager: AuthManager,
     userManager: UserManager,
-    roomManager: RoomManager
+    roomManager: RoomManager,
+    rateLimiter: RateLimiter
   ) {
     super();
     this.socket = socket;
@@ -55,7 +57,8 @@ export class ClientConnection extends EventEmitter {
       this.userManager,
       this.roomManager,
       this.server,
-      logger
+      logger,
+      rateLimiter
     );
     this.heartbeatService = new HeartbeatService(this, logger);
 

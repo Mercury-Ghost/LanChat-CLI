@@ -121,6 +121,22 @@ npx tsc --noEmit
 npm run lint
 ```
 
+### 安全扫描
+
+项目配置了 npm audit 进行依赖安全扫描：
+
+```bash
+# 运行安全扫描，检查依赖漏洞
+npm run audit
+# 或
+npm run security
+
+# 自动修复可修复的漏洞
+npm run audit:fix
+```
+
+建议在提交代码前和安装新依赖后运行安全扫描，确保项目依赖的安全性。
+
 ### 项目结构
 
 ```
@@ -144,10 +160,32 @@ src/
 
 更多详细文档请参阅 [docs/](docs/) 目录：
 
+- **[docs/deployment.md](docs/deployment.md)**: 生产环境部署指南（包含安全配置、环境变量说明）
 - **[docs/index.md](docs/index.md)**: 文档目录与导航
 - **[docs/protocol.md](docs/protocol.md)**: 通信协议详细说明
 - **[docs/architecture.md](docs/architecture.md)**: 架构与设计文档
 - **[docs/api/](docs/api/)**: API 文档（客户端、服务端、共享模块）
+
+## 生产环境部署
+
+生产环境部署请参考完整的 [部署指南](docs/deployment.md)，包含以下内容：
+
+- 系统要求与部署前准备
+- TLS 证书配置（内部 CA、Let's Encrypt、自签名）
+- JWT_SECRET 安全配置
+- 完整的环境变量说明
+- systemd/PM2/Windows 服务配置
+- 运维监控与备份策略
+- 防火墙配置与故障排查
+
+### 快速部署要点
+
+1. **使用专用用户运行服务**，不要使用 root
+2. **配置强 JWT_SECRET**（至少 32 字符随机密钥）
+3. **使用受信任的 TLS 证书**，生产环境避免自签名
+4. **设置正确的文件权限**（`.env` 和私钥为 600）
+5. **配置自动重启**（systemd 或 PM2）
+6. **设置定期备份**
 
 ## 许可证
 
@@ -157,6 +195,8 @@ src/
 
 - **证书安全**：`certs/server.key` 私钥文件严禁提交到版本库
 - **配置安全**：`.env` 文件包含敏感配置，已在 `.gitignore` 中排除
-- **生产部署**：生产环境建议使用内部 CA 签发的正式证书
+- **生产部署**：生产环境务必使用内部 CA 或受信任机构签发的正式证书
+- **JWT 密钥**：`JWT_SECRET` 必须设置为强随机密钥，严禁使用默认值
+- **文件权限**：确保敏感文件权限正确（私钥和 .env 应为 600）
 
 如有问题或建议，请通过项目仓库的 Issue 系统反馈。

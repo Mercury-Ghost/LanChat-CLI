@@ -3,21 +3,11 @@ import { TlsServer } from './TlsServer';
 import { Database } from './Database';
 import * as winston from 'winston';
 import { Logger } from 'winston';
-import { isUsingDefaultJwtSecret } from '../shared/constants';
 
 dotenv.config();
 
 async function main(): Promise<void> {
   const logger = createLogger();
-
-  if (isUsingDefaultJwtSecret()) {
-    logger.warn('警告: JWT_SECRET 使用默认值，生产环境中存在安全风险!');
-    logger.warn('请通过环境变量 JWT_SECRET 设置安全的密钥');
-    if (process.env.NODE_ENV === 'production') {
-      logger.error('生产环境必须设置 JWT_SECRET 环境变量');
-      process.exit(1);
-    }
-  }
 
   try {
     logger.info('启动 LanChat 服务器...');

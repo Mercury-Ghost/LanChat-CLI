@@ -7,7 +7,7 @@ import { ClientConnection } from './ClientConnection';
 import { TlsServer } from './TlsServer';
 import { MessageType } from '../shared/protocol/types';
 import { AuthenticatedUser } from '../shared/protocol/types';
-import { AuthError, AppError } from '../shared/errors';
+import { AuthError, AppError, ResourceLimitError } from '../shared/errors';
 import { ChatService } from './services/ChatService';
 import { FileService } from './services/FileService';
 import { AuthHandler } from './handlers/AuthHandler';
@@ -15,12 +15,23 @@ import { ChatHandler } from './handlers/ChatHandler';
 import { RoomHandler } from './handlers/RoomHandler';
 import { FileTransferHandler as FileTransferMessageHandler } from './handlers/FileTransferHandler';
 import { UserProfileHandler } from './handlers/UserProfileHandler';
+import { RateLimiter } from './RateLimiter';
 
 const EXEMPT_TYPES = [
   MessageType.LOGIN_REQUEST,
   MessageType.REGISTER_REQUEST,
   MessageType.HEARTBEAT,
   MessageType.HEARTBEAT_ACK,
+];
+
+const RATE_LIMITED_TYPES = [
+  MessageType.CHAT_ROOM,
+  MessageType.CHAT_PRIVATE,
+  MessageType.ROOM_JOIN,
+  MessageType.ROOM_LEAVE,
+  MessageType.NICK_CHANGE,
+  MessageType.HISTORY_REQUEST,
+  MessageType.FILE_REQUEST,
 ];
 
 export class MessageRouter {
@@ -32,6 +43,7 @@ export class MessageRouter {
   private roomHandler: RoomHandler;
   private fileTransferHandler: FileTransferMessageHandler;
   private userProfileHandler: UserProfileHandler;
+  private rateLimiter: RateLimiter;
 
   constructor(
     connection: ClientConnection,
@@ -40,11 +52,13 @@ export class MessageRouter {
     userManager: UserManager,
     roomManager: RoomManager,
     server: TlsServer,
-    logger: Logger
+    logger: Logger,
+    rateLimiter: RateLimiter
   ) {
     this.connection = connection;
     this.server = server;
     this.logger = logger;
+    this.rateLimiter = rateLimiter;
 
     const chatService = new ChatService(database, userManager, roomManager, server, logger);
     const fileService = new FileService(database, userManager, logger);
@@ -86,6 +100,14 @@ export class MessageRouter {
     try {
       if (!EXEMPT_TYPES.includes(type) && !user) {
         throw new AuthError('需要登录才能执行此操作');
+      }
+
+      if (RATE_LIMITED_TYPES.includes(type) && user) {
+        const key = user.userId.toString();
+        const { allowed } = this.rateLimiter.checkLimit(key);
+        if (!allowed) {
+          throw new ResourceLimitError('请求过于频繁，请稍后再试');
+        }
       }
 
       switch (type) {

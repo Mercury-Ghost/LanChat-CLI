@@ -9,6 +9,7 @@ import * as path from 'path';
 import { RoomManager } from './RoomManager';
 import { UserManager } from './UserManager';
 import { AuthManager } from './AuthManager';
+import { RateLimiter } from './RateLimiter';
 
 export class TlsServer {
   private server: tls.Server | null = null;
@@ -18,6 +19,7 @@ export class TlsServer {
   private roomManager: RoomManager;
   private userManager: UserManager;
   private authManager: AuthManager;
+  private rateLimiter: RateLimiter;
 
   constructor(database: Database, logger: Logger) {
     this.database = database;
@@ -25,6 +27,10 @@ export class TlsServer {
     this.roomManager = new RoomManager(database, logger);
     this.userManager = new UserManager(logger);
     this.authManager = new AuthManager(database);
+    this.rateLimiter = new RateLimiter({
+      requestsPerWindow: 60,
+      windowMs: 60000,
+    });
   }
 
   async start(): Promise<void> {
@@ -93,7 +99,8 @@ export class TlsServer {
       this,
       this.authManager,
       this.userManager,
-      this.roomManager
+      this.roomManager,
+      this.rateLimiter
     );
     this.connections.set(socketId, connection);
 
@@ -124,6 +131,10 @@ export class TlsServer {
 
   getAuthManager(): AuthManager {
     return this.authManager;
+  }
+
+  getRateLimiter(): RateLimiter {
+    return this.rateLimiter;
   }
 
   broadcast(message: Buffer, excludeSocketIds?: string[]): void {
