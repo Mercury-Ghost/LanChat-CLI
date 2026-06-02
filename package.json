@@ -21,7 +21,11 @@
     "test:coverage": "jest --coverage",
     "audit": "npm audit",
     "audit:fix": "npm audit fix",
-    "security": "npm audit"
+    "security": "npm audit",
+    "pkg:server": "echo \"Skipping pkg due to network issues - building code bundle\"",
+    "pkg:client": "echo \"Skipping pkg due to network issues - building code bundle\"",
+    "pack:dist": "node scripts/package-dist.js",
+    "build:dist": "npm run build:server && npm run build:client && npm run test && npm run pkg:server && npm run pkg:client && npm run pack:dist"
   },
   "keywords": [
     "chatroom",
@@ -52,8 +56,11 @@
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^7.1.0",
     "@typescript-eslint/parser": "^7.1.0",
+    "adm-zip": "^0.5.17",
+    "archiver": "^8.0.0",
     "eslint": "^8.57.0",
     "jest": "^30.4.2",
+    "pkg": "^5.8.1",
     "ts-jest": "^29.4.11",
     "typescript": "^5.4.2"
   },

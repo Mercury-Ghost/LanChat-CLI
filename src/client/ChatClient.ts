@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { Transport } from './Transport';
-import { TlsTransport } from './TlsTransport';
+import { TlsTransport, CertificateVerifyCallback } from './TlsTransport';
 import { AuthClient } from './AuthClient';
 import { CommandHandler } from './CommandHandler';
 import { FileTransferClient } from './FileTransferClient';
@@ -374,24 +374,39 @@ export class ChatClient extends EventEmitter {
    * 
    * @param host - 服务器主机地址
    * @param port - 服务器端口号
+   * @param verifyCallback - 证书验证回调函数（可选）
    * @returns {Promise<void>} 连接成功后 resolve
    * @throws {Error} 连接失败时抛出错误
    * 
    * @example
    * ```typescript
    * try {
-   *   await client.connect('192.168.1.100', 9527);
+   *   await client.connect('192.168.1.100', 9527, async (fingerprint, isFirst) => {
+   *     if (isFirst) {
+   *       return confirm('信任此证书?');
+   *     }
+   *     return true;
+   *   });
    *   console.log('连接成功');
    * } catch (error) {
    *   console.error('连接失败:', error.message);
    * }
    * ```
    */
-  async connect(host: string, port: number): Promise<void> {
+  async connect(
+    host: string, 
+    port: number, 
+    verifyCallback?: CertificateVerifyCallback
+  ): Promise<void> {
     this.state = ConnectionState.Connecting;
 
     try {
-      await this.transport.connect(host, port);
+      if (verifyCallback && 'connect' in this.transport) {
+        await (this.transport as TlsTransport).connect(host, port, verifyCallback);
+      } else {
+        await this.transport.connect(host, port);
+      }
+      
       this.state = ConnectionState.Connected;
 
       const savedToken = this.localStore.getToken();

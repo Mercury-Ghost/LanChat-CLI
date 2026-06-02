@@ -651,12 +651,12 @@
     {
       "sender": "alice",
       "content": "大家好！",
-      "timestamp": "2024-05-30T10:00:00.000Z"
+      "timestamp": "2026-06-03T10:00:00.000Z"
     },
     {
       "sender": "bob",
       "content": "你好！",
-      "timestamp": "2024-05-30T10:01:00.000Z"
+      "timestamp": "2026-06-03T10:01:00.000Z"
     }
   ]
 }

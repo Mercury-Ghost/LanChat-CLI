@@ -42,6 +42,13 @@ export interface ITransport {
   isConnected(): boolean;
 
   /**
+   * 获取服务器证书指纹
+   * 
+   * @returns {string} SHA-256 证书指纹，如果未连接则返回空字符串
+   */
+  getServerFingerprint(): string;
+
+  /**
    * 注册事件监听器
    */
   on(event: 'connect', listener: () => void): this;
@@ -123,6 +130,17 @@ export class BaseTransport extends EventEmitter implements ITransport {
    */
   isConnected(): boolean {
     return this.isSocketConnected;
+  }
+
+  /**
+   * 获取服务器证书指纹
+   * 
+   * @returns {string} SHA-256 证书指纹，如果未连接则返回空字符串
+   * 
+   * @description 默认实现返回空字符串，子类可以覆盖此方法
+   */
+  getServerFingerprint(): string {
+    return '';
   }
 }
 

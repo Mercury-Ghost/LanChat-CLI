@@ -18,21 +18,21 @@ import {
 describe('utils', () => {
   describe('formatTimestamp', () => {
     it('should format timestamp correctly', () => {
-      const date = new Date('2024-01-15T10:30:45');
+      const date = new Date('2026-06-03T10:30:45');
       const result = formatTimestamp(date);
-      expect(result).toBe('2024-01-15 10:30:45');
+      expect(result).toBe('2026-06-03 10:30:45');
     });
 
     it('should format numeric timestamp correctly', () => {
-      const date = new Date('2024-01-15T10:30:45');
+      const date = new Date('2026-06-03T10:30:45');
       const result = formatTimestamp(date.getTime());
-      expect(result).toBe('2024-01-15 10:30:45');
+      expect(result).toBe('2026-06-03 10:30:45');
     });
 
     it('should support custom format', () => {
-      const date = new Date('2024-01-15T10:30:45');
+      const date = new Date('2026-06-03T10:30:45');
       const result = formatTimestamp(date, 'YYYY/MM/DD');
-      expect(result).toBe('2024/01/15');
+      expect(result).toBe('2026/06/03');
     });
   });
 

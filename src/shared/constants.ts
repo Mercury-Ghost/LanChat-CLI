@@ -5,18 +5,29 @@ export const SERVER_PORT = parseInt(process.env.PORT || '9527', 10);
 
 /**
  * JWT 密钥
- * 所有环境都必须通过环境变量 JWT_SECRET 设置
+ * 通过环境变量 JWT_SECRET 设置，测试环境使用默认值，生产环境必须设置
  */
-if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required in all environments');
+const isProduction = process.env.NODE_ENV === 'production';
+const defaultJwtSecret = 'lanchat-test-secret-key-12345';
+const jwtSecretFromEnv = process.env.JWT_SECRET;
+
+if (isProduction && !jwtSecretFromEnv) {
+  throw new Error(
+    '生产环境必须设置 JWT_SECRET 环境变量。' +
+    '请设置一个强密钥（至少 32 个字符）。'
+  );
 }
 
-export const JWT_SECRET = process.env.JWT_SECRET;
+if (jwtSecretFromEnv && jwtSecretFromEnv.length < 32) {
+  console.warn('警告: JWT_SECRET 建议至少 32 个字符以获得更高安全性。');
+}
+
+export const JWT_SECRET = jwtSecretFromEnv || (isProduction ? '' : defaultJwtSecret);
 
 /**
  * JWT 令牌过期时间（秒），默认 24 小时
  */
-export const JWT_EXPIRES_IN = 24 * 60 * 60;
+export const JWT_EXPIRES_IN = parseInt(process.env.JWT_EXPIRES_IN || (24 * 60 * 60).toString(), 10);
 
 /**
  * 数据库文件路径

@@ -646,7 +646,7 @@ import { formatTimestamp } from './shared';
 
 const now = Date.now();
 console.log(formatTimestamp(now)); // "2026-06-02 12:34:56"
-console.log(formatTimestamp(now, 'YYYY/MM/DD')); // "2024/05/30"
+console.log(formatTimestamp(now, 'YYYY/MM/DD')); // "2026/06/03"
 console.log(formatTimestamp(now, 'HH:mm:ss')); // "12:34:56"
 ```
 

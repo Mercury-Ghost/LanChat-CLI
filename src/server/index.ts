@@ -1,16 +1,21 @@
-import dotenv from 'dotenv';
 import { TlsServer } from './TlsServer';
 import { Database } from './Database';
 import * as winston from 'winston';
 import { Logger } from 'winston';
-
-dotenv.config();
+import { ensureCertificate, loadConfig, getConfig } from '../shared';
+import * as path from 'path';
 
 async function main(): Promise<void> {
+  loadConfig();
   const logger = createLogger();
+  const config = getConfig();
 
   try {
     logger.info('启动 LanChat 服务器...');
+
+    const certDir = path.dirname(config.certPath);
+    await ensureCertificate(certDir);
+    logger.info('TLS 证书检查/生成完成');
 
     const database = new Database();
     database.init();

@@ -7,6 +7,14 @@ import dotenv from 'dotenv';
 import { BaseTransport } from './Transport';
 
 /**
+ * 证书验证回调函数类型
+ */
+export type CertificateVerifyCallback = (
+  fingerprint: string,
+  isFirstConnection: boolean
+) => Promise<boolean>;
+
+/**
  * TLS 传输层类
  * 
  * @description 基于 TLS/SSL 的安全传输层实现，负责与服务器建立加密连接并处理数据传输
@@ -26,7 +34,12 @@ import { BaseTransport } from './Transport';
  *   console.log('收到数据:', data);
  * });
  * 
- * await transport.connect('localhost', 9527);
+ * await transport.connect('localhost', 9527, async (fingerprint, isFirst) => {
+ *   if (isFirst) {
+ *     return confirm('信任此证书?');
+ *   }
+ *   return true;
+ * });
  * ```
  */
 export class TlsTransport extends BaseTransport {
@@ -44,6 +57,9 @@ export class TlsTransport extends BaseTransport {
 
   /** 是否为开发环境 */
   private isDev: boolean;
+
+  /** 证书指纹 */
+  private currentFingerprint: string = '';
 
   /**
    * 构造函数
@@ -76,34 +92,75 @@ export class TlsTransport extends BaseTransport {
    * 
    * @param host - 服务器主机地址
    * @param port - 服务器端口号
+   * @param verifyCallback - 证书验证回调函数
    * @returns {Promise<void>} 连接成功后 resolve
    * @throws {Error} 连接失败或 TLS 握手失败时抛出错误
    * 
-   * @description 与服务器建立 TLS 连接，执行证书验证并设置事件监听
+   * @description 与服务器建立 TLS 连接，在握手阶段执行证书验证并设置事件监听
    */
-  async connect(host: string, port: number): Promise<void> {
+  async connect(
+    host: string, 
+    port: number, 
+    verifyCallback?: CertificateVerifyCallback
+  ): Promise<void> {
     this.host = host;
     this.port = port;
 
+    let trustedFingerprint: string | null = null;
+    let isFirstConnection = true;
+    
+    const hostKey = `${this.host}:${this.port}`;
+    if (fs.existsSync(this.knownHostsPath)) {
+      try {
+        const knownHosts = JSON.parse(fs.readFileSync(this.knownHostsPath, 'utf8')) as Record<string, string>;
+        trustedFingerprint = knownHosts[hostKey] || null;
+        isFirstConnection = !trustedFingerprint;
+      } catch {
+        console.warn('警告: known_hosts 文件格式错误，将被覆盖');
+      }
+    }
+
     return new Promise((resolve, reject) => {
       const options: tls.ConnectionOptions = {
-        rejectUnauthorized: !this.isDev,
+        rejectUnauthorized: false,
         checkServerIdentity: (hostname, cert) => {
-          return this.verifyCertificate(cert);
+          return this.checkServerIdentity(hostname, cert, trustedFingerprint);
         },
       };
 
-      this.socket = tls.connect(port, host, options, () => {
+      let certificateVerified = !verifyCallback;
+      let tempFingerprint = '';
+
+      this.socket = tls.connect(port, host, options, async () => {
         if (!this.socket) {
           reject(new Error('Socket 未初始化'));
           return;
         }
 
-        const error = this.verifyCertificate(this.socket.getPeerCertificate());
-        if (error) {
-          reject(error);
-          this.socket?.destroy();
-          return;
+        tempFingerprint = this.getFingerprint(this.socket.getPeerCertificate());
+
+        if (verifyCallback && !certificateVerified) {
+          try {
+            const isTrusted = await verifyCallback(tempFingerprint, isFirstConnection);
+            if (!isTrusted) {
+              this.socket?.destroy();
+              reject(new Error('证书验证失败'));
+              return;
+            }
+
+            if (isFirstConnection) {
+              this.saveFingerprint(tempFingerprint);
+            }
+
+            certificateVerified = true;
+            this.currentFingerprint = tempFingerprint;
+          } catch (error) {
+            this.socket?.destroy();
+            reject(error instanceof Error ? error : new Error('证书验证过程出错'));
+            return;
+          }
+        } else {
+          this.currentFingerprint = tempFingerprint;
         }
 
         console.log('TLS 连接已建立');
@@ -131,42 +188,31 @@ export class TlsTransport extends BaseTransport {
   }
 
   /**
-   * 验证服务器证书
+   * 检查服务器身份
    * 
    * @private
+   * @param hostname - 主机名
    * @param cert - 服务器证书
+   * @param trustedFingerprint - 信任的证书指纹
    * @returns {Error | undefined} 验证失败返回错误，否则返回 undefined
-   * 
-   * @description 检查服务器证书指纹是否与已知主机匹配，防止中间人攻击
    */
-  private verifyCertificate(cert: tls.PeerCertificate): Error | undefined {
-    const fingerprint = this.getFingerprint(cert);
-    const hostKey = `${this.host}:${this.port}`;
-
-    if (fs.existsSync(this.knownHostsPath)) {
-      try {
-        const knownHosts = JSON.parse(fs.readFileSync(this.knownHostsPath, 'utf8')) as Record<string, string>;
-        const knownFingerprint = knownHosts[hostKey];
-
-        if (knownFingerprint) {
-          if (knownFingerprint !== fingerprint) {
-            const errorMsg = `服务器证书指纹不匹配! 预期: ${knownFingerprint}, 实际: ${fingerprint}`;
-            console.error(errorMsg);
-            return new Error(errorMsg);
-          }
-        } else {
-          console.log('首次连接到该主机，请验证服务器证书指纹:');
-          console.log(`SHA-256: ${fingerprint}`);
-          console.log('接受此证书? 调用 saveKnownHost() 保存');
-        }
-      } catch {
-        console.warn('警告: known_hosts 文件格式错误，将被覆盖');
-      }
-    } else {
-      console.log('首次连接，请验证服务器证书指纹:');
-      console.log(`SHA-256: ${fingerprint}`);
-      console.log('接受此证书? 调用 saveKnownHost() 保存');
+  private checkServerIdentity(
+    hostname: string, 
+    cert: tls.PeerCertificate,
+    trustedFingerprint: string | null
+  ): Error | undefined {
+    if (!trustedFingerprint) {
+      return undefined;
     }
+
+    const fingerprint = this.getFingerprint(cert);
+    
+    if (fingerprint !== trustedFingerprint) {
+      const errorMsg = `服务器证书指纹不匹配! 预期: ${trustedFingerprint}, 实际: ${fingerprint}`;
+      console.error(errorMsg);
+      return new Error(errorMsg);
+    }
+
     return undefined;
   }
 
@@ -186,7 +232,31 @@ export class TlsTransport extends BaseTransport {
 
     const sha256 = crypto.createHash('sha256');
     sha256.update(cert.raw);
-    return sha256.digest('hex');
+    const hash = sha256.digest('hex');
+    return hash.match(/.{2}/g)?.join(':').toUpperCase() || '';
+  }
+
+  /**
+   * 保存证书指纹到已知主机
+   * 
+   * @private
+   * @param fingerprint - 证书指纹
+   */
+  private saveFingerprint(fingerprint: string): void {
+    const hostKey = `${this.host}:${this.port}`;
+    let knownHosts: Record<string, string> = {};
+
+    if (fs.existsSync(this.knownHostsPath)) {
+      try {
+        knownHosts = JSON.parse(fs.readFileSync(this.knownHostsPath, 'utf8')) as Record<string, string>;
+      } catch {
+        console.warn('警告: known_hosts 文件格式错误，将被覆盖');
+      }
+    }
+
+    knownHosts[hostKey] = fingerprint;
+    fs.writeFileSync(this.knownHostsPath, JSON.stringify(knownHosts, null, 2));
+    console.log(`已保存主机 ${hostKey} 的证书指纹`);
   }
 
   /**
@@ -219,84 +289,13 @@ export class TlsTransport extends BaseTransport {
   }
 
   /**
-   * 获取远程证书指纹
+   * 获取服务器证书指纹
    * 
-   * @private
-   * @returns {string} SHA-256 证书指纹
+   * @returns {string} SHA-256 证书指纹，如果未连接则返回空字符串
    * 
-   * @description 计算当前连接的服务器证书指纹
+   * @description 获取当前连接的服务器证书指纹，用于证书验证和安全检查
    */
-  private getRemoteFingerprint(): string {
-    if (!this.socket) {
-      return '';
-    }
-
-    const cert = this.socket.getPeerCertificate();
-    return this.getFingerprint(cert);
-  }
-
-  /**
-   * 保存已知主机
-   * 
-   * @returns {void}
-   * 
-   * @description 将当前服务器证书指纹保存到已知主机列表
-   */
-  saveKnownHost(): void {
-    const fingerprint = this.getRemoteFingerprint();
-    if (!fingerprint) {
-      return;
-    }
-
-    const hostKey = `${this.host}:${this.port}`;
-    let knownHosts: Record<string, string> = {};
-
-    if (fs.existsSync(this.knownHostsPath)) {
-      try {
-        knownHosts = JSON.parse(fs.readFileSync(this.knownHostsPath, 'utf8')) as Record<string, string>;
-      } catch {
-        console.warn('警告: known_hosts 文件格式错误，将重新初始化');
-      }
-    }
-
-    knownHosts[hostKey] = fingerprint;
-    fs.writeFileSync(this.knownHostsPath, JSON.stringify(knownHosts, null, 2));
-    console.log(`已保存主机 ${hostKey} 的证书指纹`);
-  }
-
-  /**
-   * 设置消息处理回调
-   * 
-   * @param callback - 消息回调函数
-   */
-  onMessage(callback: (data: Buffer) => void): void {
-    this.on('message', callback);
-  }
-
-  /**
-   * 设置连接关闭回调
-   * 
-   * @param callback - 关闭回调函数
-   */
-  onClose(callback: () => void): void {
-    this.on('close', callback);
-  }
-
-  /**
-   * 设置错误处理回调
-   * 
-   * @param callback - 错误回调函数
-   */
-  onError(callback: (error: Error) => void): void {
-    this.on('error', callback);
-  }
-
-  /**
-   * 设置连接成功回调
-   * 
-   * @param callback - 连接回调函数
-   */
-  onConnect(callback: () => void): void {
-    this.on('connect', callback);
+  getServerFingerprint(): string {
+    return this.currentFingerprint;
   }
 }

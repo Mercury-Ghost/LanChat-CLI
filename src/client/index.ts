@@ -1,4 +1,6 @@
 import * as readline from 'readline';
+import * as fs from 'fs';
+import * as path from 'path';
 import dotenv from 'dotenv';
 import { ChatClient } from './ChatClient';
 import { TuiManager } from './TuiManager';
@@ -6,10 +8,17 @@ import { DEFAULT_HOST, DEFAULT_PORT } from '../shared/constants';
 
 dotenv.config();
 
+interface ClientConfig {
+  host: string;
+  port: number;
+  trustedFingerprints: string[];
+}
+
 class LanChatClient {
   private client: ChatClient;
   private tui: TuiManager | null = null;
   private rl: readline.Interface | null = null;
+  private config: ClientConfig | null = null;
 
   constructor() {
     this.client = new ChatClient();
@@ -23,14 +32,26 @@ class LanChatClient {
       output: process.stdout,
     });
 
-    const host = await this.prompt('服务器地址', DEFAULT_HOST);
-    const port = parseInt(await this.prompt('端口', DEFAULT_PORT.toString()), 10);
+    await this.loadConfig();
+
+    const host = await this.prompt('服务器地址', this.config?.host || DEFAULT_HOST);
+    const port = parseInt(await this.prompt('端口', (this.config?.port || DEFAULT_PORT).toString()), 10);
 
     this.tui = new TuiManager();
     this.client.setTui(this.tui);
 
     try {
-      await this.client.connect(host, port);
+      await this.client.connect(host, port, async (fingerprint, isFirstConnection) => {
+        return await this.verifyFingerprint(fingerprint, isFirstConnection);
+      });
+
+      this.config = {
+        host,
+        port,
+        trustedFingerprints: this.config?.trustedFingerprints || [],
+      };
+      await this.saveConfig();
+
       this.tui.start();
 
       await this.handleAuth();
@@ -40,6 +61,42 @@ class LanChatClient {
       console.error('连接失败:', error);
       process.exit(1);
     }
+  }
+
+  private async loadConfig(): Promise<void> {
+    const configPath = this.getConfigPath();
+    if (fs.existsSync(configPath)) {
+      try {
+        const content = await fs.promises.readFile(configPath, 'utf8');
+        this.config = JSON.parse(content);
+      } catch {
+        this.config = null;
+      }
+    }
+  }
+
+  private async saveConfig(): Promise<void> {
+    if (!this.config) return;
+    const configPath = this.getConfigPath();
+    await fs.promises.mkdir(path.dirname(configPath), { recursive: true });
+    await fs.promises.writeFile(configPath, JSON.stringify(this.config, null, 2));
+  }
+
+  private getConfigPath(): string {
+    const homeDir = process.env.HOME || process.env.USERPROFILE || '.';
+    return path.join(homeDir, '.lanchat', 'config.json');
+  }
+
+  private async verifyFingerprint(fingerprint: string, isFirstConnection: boolean): Promise<boolean> {
+    if (!isFirstConnection) {
+      return true;
+    }
+
+    console.log('\n⚠️  首次连接此服务器，证书指纹如下：');
+    console.log(`   ${fingerprint}`);
+    
+    const answer = await this.prompt('是否信任此证书? (y/N)', 'N');
+    return answer.toLowerCase() === 'y';
   }
 
   private printWelcome(): void {
