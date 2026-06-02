@@ -1,5 +1,9 @@
 # LanChat CLI
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-green.svg)](https://nodejs.org/)
+
 局域网聊天室 CLI 程序，基于 TCP/TLS 的全屏终端聊天应用
 
 ## 项目概述
@@ -158,13 +162,19 @@ src/
 
 ## 文档
 
-更多详细文档请参阅 [docs/](docs/) 目录：
+完整的项目文档位于 [docs/](docs/) 目录：
 
-- **[docs/deployment.md](docs/deployment.md)**: 生产环境部署指南（包含安全配置、环境变量说明）
-- **[docs/index.md](docs/index.md)**: 文档目录与导航
-- **[docs/protocol.md](docs/protocol.md)**: 通信协议详细说明
-- **[docs/architecture.md](docs/architecture.md)**: 架构与设计文档
-- **[docs/api/](docs/api/)**: API 文档（客户端、服务端、共享模块）
+| 文档 | 说明 |
+|------|------|
+| [docs/index.md](docs/index.md) | 文档目录与导航入口 |
+| [docs/architecture.md](docs/architecture.md) | 系统架构与设计说明 |
+| [docs/architecture-responsibilities.md](docs/architecture-responsibilities.md) | 模块职责划分说明 |
+| [docs/protocol.md](docs/protocol.md) | 通信协议详细规范 |
+| [docs/deployment.md](docs/deployment.md) | 生产环境部署指南 |
+| [docs/api/index.md](docs/api/index.md) | API 文档总览 |
+| [docs/api/client-api.md](docs/api/client-api.md) | 客户端 API 文档 |
+| [docs/api/server-api.md](docs/api/server-api.md) | 服务端 API 文档 |
+| [docs/api/shared-api.md](docs/api/shared-api.md) | 共享模块 API 文档 |
 
 ## 生产环境部署
 
@@ -187,9 +197,31 @@ src/
 5. **配置自动重启**（systemd 或 PM2）
 6. **设置定期备份**
 
+## 贡献指南
+
+欢迎贡献代码！详细的贡献指南请参阅 [CONTRIBUTING.md](CONTRIBUTING.md)，包含：
+
+- 开发环境设置
+- 代码规范
+- 提交规范
+- PR 流程
+- 问题报告指南
+
 ## 许可证
 
 本项目采用 MIT 许可证，详情请参阅 [LICENSE](LICENSE) 文件。
+
+## 版权声明
+
+Copyright (c) 2026 Mercury-Ghost
+
+**保留所有权利。**
+
+## 开发者信息
+
+**作者**: Mercury-Ghost  
+**邮箱**: sbc0124@outlook.com  
+**项目地址**: [https://github.com/Mercury-Ghost/LanChat-CLI](https://github.com/Mercury-Ghost/LanChat-CLI)
 
 ## 安全注意事项
 

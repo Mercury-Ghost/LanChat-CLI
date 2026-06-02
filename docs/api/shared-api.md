@@ -1,5 +1,23 @@
 # Shared 模块 API 文档
 
+## 1. 目录
+
+- [1.1 模块概述](#11-模块概述)
+- [1.2 技术栈](#12-技术栈)
+- [2. 快速开始指南](#2-快速开始指南)
+- [3. 常量参考](#3-常量参考)
+- [4. 错误处理参考](#4-错误处理参考)
+- [5. 验证器参考](#5-验证器参考)
+- [6. 工具函数参考](#6-工具函数参考)
+- [7. 协议编解码器参考](#7-协议编解码器参考)
+- [8. 文件工具参考](#8-文件工具参考)
+- [9. 类型定义参考](#9-类型定义参考)
+- [10. 使用示例](#10-使用示例)
+- [11. 附录](#11-附录)
+- [12. 更新日志](#12-更新日志)
+
+---
+
 ## 1. 模块概述
 
 `shared` 模块是 LanChat CLI 项目的核心共享库，为客户端和服务端提供通用的工具函数、常量定义、错误处理、数据验证和协议编解码功能。该模块设计为跨平台兼容，可在客户端和服务端间无缝共享使用。
@@ -27,6 +45,16 @@ src/shared/
 - **工具函数**：时间格式化、文件大小格式化、JSON 安全解析等
 - **协议编解码**：二进制消息的编码和解码
 - **文件处理**：文件分块、重组和进度计算
+
+### 1.2 技术栈
+
+| 分类 | 技术 |
+|------|------|
+| 语言 | TypeScript |
+| 运行时 | Node.js |
+| 加密算法 | Argon2 |
+| JWT | jsonwebtoken |
+| 架构模式 | 工具库模式 |
 
 ---
 
@@ -617,7 +645,7 @@ console.log(result2); // { valid: false, error: '电子邮件格式不正确' }
 import { formatTimestamp } from './shared';
 
 const now = Date.now();
-console.log(formatTimestamp(now)); // "2024-05-30 12:34:56"
+console.log(formatTimestamp(now)); // "2026-06-02 12:34:56"
 console.log(formatTimestamp(now, 'YYYY/MM/DD')); // "2024/05/30"
 console.log(formatTimestamp(now, 'HH:mm:ss')); // "12:34:56"
 ```
@@ -641,14 +669,14 @@ console.log(formatTimestamp(now, 'HH:mm:ss')); // "12:34:56"
 ```typescript
 import { formatDate } from './shared';
 
-// 假设今天是 2024-05-30
-const today = new Date('2024-05-30 12:34:56');
+// 假设今天是 2026-06-02
+const today = new Date('2026-06-02 12:34:56');
 console.log(formatDate(today)); // "12:34:56"
 
-const yesterday = new Date('2024-05-29 12:34:56');
+const yesterday = new Date('2026-06-01 12:34:56');
 console.log(formatDate(yesterday)); // "昨天 12:34:56"
 
-const thisYear = new Date('2024-03-15 12:34:56');
+const thisYear = new Date('2026-03-15 12:34:56');
 console.log(formatDate(thisYear)); // "03-15 12:34:56"
 
 const lastYear = new Date('2023-12-25 12:34:56');
@@ -674,7 +702,7 @@ console.log(formatRelativeTime(now)); // "刚刚"
 console.log(formatRelativeTime(now - 5 * 60 * 1000)); // "5分钟前"
 console.log(formatRelativeTime(now - 2 * 60 * 60 * 1000)); // "2小时前"
 console.log(formatRelativeTime(now - 3 * 24 * 60 * 60 * 1000)); // "3天前"
-console.log(formatRelativeTime(now - 10 * 24 * 60 * 60 * 1000)); // "2024-05-20 12:34:56"
+console.log(formatRelativeTime(now - 10 * 24 * 60 * 60 * 1000)); // "2026-05-23 12:34:56"
 ```
 
 ### 6.4 formatFileSize()
@@ -2038,5 +2066,19 @@ export {
 
 ---
 
+## 12. 更新日志
+
+### v1.0.0
+
+- 初始版本发布
+- 实现常量管理模块
+- 实现错误处理模块
+- 实现验证器模块
+- 实现工具函数模块
+- 实现协议编解码器模块
+- 实现文件工具模块
+
+---
+
 **文档版本：** 1.0.0  
-**最后更新：** 2024-05-30
+**最后更新：** 2026-06-02

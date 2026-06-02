@@ -16,11 +16,23 @@
     <meta property="og:description" content="基于 TCP/TLS 的全屏终端聊天应用，支持群聊、私聊、文件传输与断点续传">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="zh_CN">
+    <meta property="og:url" content="https://mercury-ghost.github.io/LanChat-CLI/">
+    <meta property="og:image" content="https://mercury-ghost.github.io/LanChat-CLI/og-image.png">
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="LanChat CLI · 局域网聊天室">
     <meta name="twitter:description" content="基于 TCP/TLS 的全屏终端聊天应用">
+    <meta name="twitter:creator" content="@MercuryGhost">
+    
+    <!-- SEO优化 -->
+    <link rel="canonical" href="https://mercury-ghost.github.io/LanChat-CLI/">
+    <meta name="theme-color" content="#1e40af">
+    <link rel="manifest" href="site.webmanifest">
+    
+    <!-- 性能优化 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
     <style>
         /* ===== CSS Reset & Base ===== */
@@ -1060,7 +1072,43 @@ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
                         </a>
                     </li>
                     <li>
-                        <a href="doc.html?file=README.md" class="doc-card">
+                        <a href="doc.html?file=architecture.md" class="doc-card">
+                            <span class="doc-icon" aria-hidden="true">🏗️</span>
+                            <div class="doc-info">
+                                <h4>架构设计文档</h4>
+                                <p>系统架构与设计说明</p>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="doc.html?file=architecture-responsibilities.md" class="doc-card">
+                            <span class="doc-icon" aria-hidden="true">📋</span>
+                            <div class="doc-info">
+                                <h4>模块职责划分</h4>
+                                <p>各模块职责与协作关系说明</p>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="doc.html?file=deployment.md" class="doc-card">
+                            <span class="doc-icon" aria-hidden="true">🚀</span>
+                            <div class="doc-info">
+                                <h4>部署指南</h4>
+                                <p>生产环境部署配置与安全说明</p>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="doc.html?file=../CONTRIBUTING.md" class="doc-card">
+                            <span class="doc-icon" aria-hidden="true">🤝</span>
+                            <div class="doc-info">
+                                <h4>贡献指南</h4>
+                                <p>代码贡献规范与 PR 流程</p>
+                            </div>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="doc.html?file=../README.md" class="doc-card">
                             <span class="doc-icon" aria-hidden="true">📖</span>
                             <div class="doc-info">
                                 <h4>README 文档</h4>
@@ -1069,7 +1117,7 @@ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
                         </a>
                     </li>
                     <li>
-                        <a href="doc.html?file=LICENSE" class="doc-card">
+                        <a href="doc.html?file=../LICENSE" class="doc-card">
                             <span class="doc-icon" aria-hidden="true">📜</span>
                             <div class="doc-info">
                                 <h4>MIT 许可证</h4>
@@ -1089,7 +1137,7 @@ openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
                 <span class="footer-divider">·</span>
                 <a href="doc.html?file=protocol.md" class="footer-link">协议文档</a>
                 <span class="footer-divider">·</span>
-                <a href="doc.html?file=README.md" class="footer-link">README</a>
+                <a href="doc.html?file=../README.md" class="footer-link">README</a>
                 <span class="footer-divider">·</span>
                 <a href="doc.html?file=api/index.md" class="footer-link">API 文档</a>
             </div>

@@ -11,6 +11,13 @@
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>">
     
+    <!-- Mermaid.js CDN -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+        window.mermaid = mermaid;
+    </script>
+    
     <style>
         /* ===== CSS Reset & Base ===== */
         *, *::before, *::after {
@@ -508,13 +515,17 @@
         // 渲染 Markdown
         function renderMarkdown(markdown) {
             let html = markdown;
+            const mermaidBlocks = [];
+            let mermaidIndex = 0;
 
             // 处理代码块 (```) - 包括 mermaid 脑图
             html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
                 if (lang === 'mermaid' || lang === 'mindmap') {
-                    return '<div class="mermaid-block" style="background: var(--color-bg-elevated); border: 1px solid var(--color-border-soft); border-radius: var(--radius-md); padding: 1.25rem; margin: 1.25rem 0; overflow-x: auto;"><pre style="background: none; border: none; margin: 0; padding: 0; white-space: pre-wrap;">' + escapeHtml(code) + '</pre></div>';
+                    const blockId = 'mermaid-' + mermaidIndex++;
+                    mermaidBlocks.push({ id: blockId, code: code.trim() });
+                    return `<div class="mermaid" id="${blockId}"></div>`;
                 }
-                return '<pre><code class="language-' + (lang || 'text') + '">' + escapeHtml(code) + '</code></pre>';
+                return '<pre><code class="language-' + (lang || 'text') + '">' + escapeHtml(code.trim()) + '</code></pre>';
             });
 
             // 处理行内代码 (`)
@@ -528,6 +539,7 @@
             let inTable = false;
             let tableHeader = '';
             let tableRows = [];
+            let expectedColumns = 0;
 
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trimRight();
@@ -537,12 +549,14 @@
                     const nextLine = i < lines.length - 1 ? lines[i + 1].trim() : '';
                     
                     // 检查下一行是否是分隔线（包含至少一个 - 和 |）
-                    const isSeparator = /^[\s|-]*-+[\s|-]*$/.test(nextLine);
+                    const isSeparator = /^[\s|:-]*-+[\s|:-]*$/.test(nextLine);
                     
                     if (isSeparator) {
                         // 这是表格头
                         inTable = true;
                         tableHeader = line;
+                        // 计算预期列数
+                        expectedColumns = tableHeader.split('|').filter(cell => cell.trim() !== '').length;
                         i++; // 跳过分隔线
                         tableRows = [];
                         continue;
@@ -554,29 +568,12 @@
                 } else if (inTable) {
                     // 表格结束
                     if (tableHeader) {
-                        let tableHtml = '<table>';
-                        // 添加表头
-                        let headerCells = tableHeader.split('|').map(cell => cell.trim()).filter(cell => cell !== undefined);
-                        tableHtml += '<thead><tr>';
-                        headerCells.forEach(cell => tableHtml += '<th>' + cell + '</th>');
-                        tableHtml += '</tr></thead>';
-                        // 添加表体
-                        if (tableRows.length > 0) {
-                            tableHtml += '<tbody>';
-                            tableRows.forEach(row => {
-                                let cells = row.split('|').map(cell => cell.trim());
-                                tableHtml += '<tr>';
-                                cells.forEach(cell => tableHtml += '<td>' + cell + '</td>');
-                                tableHtml += '</tr>';
-                            });
-                            tableHtml += '</tbody>';
-                        }
-                        tableHtml += '</table>';
-                        result.push(tableHtml);
+                        result.push(buildTable(tableHeader, tableRows, expectedColumns));
                     }
                     inTable = false;
                     tableHeader = '';
                     tableRows = [];
+                    expectedColumns = 0;
                 }
                 
                 if (!inTable) {
@@ -586,27 +583,44 @@
             
             // 处理最后一个表格
             if (inTable && tableHeader) {
-                let tableHtml = '<table>';
-                let headerCells = tableHeader.split('|').map(cell => cell.trim()).filter(cell => cell !== undefined);
-                tableHtml += '<thead><tr>';
-                headerCells.forEach(cell => tableHtml += '<th>' + cell + '</th>');
-                tableHtml += '</tr></thead>';
-                if (tableRows.length > 0) {
-                    tableHtml += '<tbody>';
-                    tableRows.forEach(row => {
-                        let cells = row.split('|').map(cell => cell.trim());
-                        tableHtml += '<tr>';
-                        cells.forEach(cell => tableHtml += '<td>' + cell + '</td>');
-                        tableHtml += '</tr>';
-                    });
-                    tableHtml += '</tbody>';
-                }
-                tableHtml += '</table>';
-                result.push(tableHtml);
+                result.push(buildTable(tableHeader, tableRows, expectedColumns));
             }
 
             html = result.join('\n');
+            
+            // 返回mermaid块以便后续渲染
+            return { html, mermaidBlocks };
+        }
 
+        // 构建表格HTML
+        function buildTable(headerLine, rows, expectedColumns) {
+            let tableHtml = '<table>';
+            // 添加表头
+            let headerCells = headerLine.split('|').map(cell => cell.trim()).filter(cell => cell !== '');
+            tableHtml += '<thead><tr>';
+            headerCells.forEach(cell => tableHtml += '<th>' + cell + '</th>');
+            tableHtml += '</tr></thead>';
+            // 添加表体
+            if (rows.length > 0) {
+                tableHtml += '<tbody>';
+                rows.forEach(row => {
+                    let cells = row.split('|').map(cell => cell.trim()).filter(cell => cell !== '');
+                    // 确保列数一致
+                    while (cells.length < expectedColumns) {
+                        cells.push('');
+                    }
+                    tableHtml += '<tr>';
+                    cells.forEach(cell => tableHtml += '<td>' + cell + '</td>');
+                    tableHtml += '</tr>';
+                });
+                tableHtml += '</tbody>';
+            }
+            tableHtml += '</table>';
+            return tableHtml;
+        }
+
+        // 处理标题、列表、段落等
+        function processMarkdownContent(html) {
             // 处理标题 - 先处理长标题，避免短标题匹配长标题
             html = html.replace(/^###### (.*$)/gim, '<h6>$1</h6>');
             html = html.replace(/^##### (.*$)/gim, '<h5>$1</h5>');
@@ -737,10 +751,42 @@
                 document.getElementById('page-title').textContent = title + ' · LanChat CLI';
 
                 const container = document.getElementById('markdown-container');
-                container.innerHTML = '<div class="markdown-body">' + renderMarkdown(markdown) + '</div>';
+                // 渲染markdown并处理mermaid
+                const { html, mermaidBlocks } = renderMarkdown(markdown);
+                const processedHtml = processMarkdownContent(html);
+                container.innerHTML = '<div class="markdown-body">' + processedHtml + '</div>';
+                
+                // 渲染mermaid图表
+                if (mermaidBlocks.length > 0) {
+                    renderMermaidDiagrams(mermaidBlocks);
+                }
             } else {
                 const container = document.getElementById('markdown-container');
                 container.innerHTML = '<div class="error">文件加载失败</div>';
+            }
+        }
+
+        // 渲染mermaid图表
+        async function renderMermaidDiagrams(blocks) {
+            if (!window.mermaid) {
+                console.warn('Mermaid not loaded, skipping diagram rendering');
+                return;
+            }
+            
+            for (const block of blocks) {
+                try {
+                    const element = document.getElementById(block.id);
+                    if (element) {
+                        const { svg } = await window.mermaid.render(block.id, block.code);
+                        element.innerHTML = svg;
+                    }
+                } catch (error) {
+                    console.error('Error rendering mermaid diagram:', error);
+                    const element = document.getElementById(block.id);
+                    if (element) {
+                        element.innerHTML = '<pre style="color: #ef4444;">Mermaid rendering error: ' + error.message + '</pre>';
+                    }
+                }
             }
         }
 
