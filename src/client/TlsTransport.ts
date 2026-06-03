@@ -10,8 +10,8 @@ import { BaseTransport } from './Transport';
  * 证书验证回调函数类型
  */
 export type CertificateVerifyCallback = (
-  fingerprint: string,
-  isFirstConnection: boolean
+    fingerprint: string,
+    isFirstConnection: boolean
 ) => Promise<boolean>;
 
 /**
@@ -45,13 +45,13 @@ export type CertificateVerifyCallback = (
 export class TlsTransport extends BaseTransport {
   /** TLS 套接字实例 */
   private socket: tls.TLSSocket | null = null;
-  
+    
   /** 目标服务器主机地址 */
   private host: string = '';
-  
+    
   /** 目标服务器端口 */
   private port: number = 0;
-  
+    
   /** 已知主机指纹存储路径 */
   private knownHostsPath: string;
 
@@ -62,10 +62,10 @@ export class TlsTransport extends BaseTransport {
   private currentFingerprint: string = '';
 
   /**
-   * 构造函数
-   * 
-   * @description 初始化 TLS 传输层，设置已知主机存储路径
-   */
+     * 构造函数
+     * 
+     * @description 初始化 TLS 传输层，设置已知主机存储路径
+     */
   constructor() {
     super();
     dotenv.config();
@@ -75,11 +75,11 @@ export class TlsTransport extends BaseTransport {
   }
 
   /**
-   * 确保已知主机目录存在
-   * 
-   * @private
-   * @description 检查并创建存储已知主机指纹的目录
-   */
+     * 确保已知主机目录存在
+     * 
+     * @private
+     * @description 检查并创建存储已知主机指纹的目录
+     */
   private ensureKnownHostsDir(): void {
     const dir = path.dirname(this.knownHostsPath);
     if (!fs.existsSync(dir)) {
@@ -88,16 +88,16 @@ export class TlsTransport extends BaseTransport {
   }
 
   /**
-   * 连接到 TLS 服务器
-   * 
-   * @param host - 服务器主机地址
-   * @param port - 服务器端口号
-   * @param verifyCallback - 证书验证回调函数
-   * @returns {Promise<void>} 连接成功后 resolve
-   * @throws {Error} 连接失败或 TLS 握手失败时抛出错误
-   * 
-   * @description 与服务器建立 TLS 连接，在握手阶段执行证书验证并设置事件监听
-   */
+     * 连接到 TLS 服务器
+     * 
+     * @param host - 服务器主机地址
+     * @param port - 服务器端口号
+     * @param verifyCallback - 证书验证回调函数
+     * @returns {Promise<void>} 连接成功后 resolve
+     * @throws {Error} 连接失败或 TLS 握手失败时抛出错误
+     * 
+     * @description 与服务器建立 TLS 连接，在握手阶段执行证书验证并设置事件监听
+     */
   async connect(
     host: string, 
     port: number, 
@@ -108,7 +108,7 @@ export class TlsTransport extends BaseTransport {
 
     let trustedFingerprint: string | null = null;
     let isFirstConnection = true;
-    
+        
     const hostKey = `${this.host}:${this.port}`;
     if (fs.existsSync(this.knownHostsPath)) {
       try {
@@ -131,7 +131,7 @@ export class TlsTransport extends BaseTransport {
       let certificateVerified = !verifyCallback;
       let tempFingerprint = '';
 
-      this.socket = tls.connect(port, host, options, async () => {
+      const handleConnect = async () => {
         if (!this.socket) {
           reject(new Error('Socket 未初始化'));
           return;
@@ -167,6 +167,15 @@ export class TlsTransport extends BaseTransport {
         this.isSocketConnected = true;
         this.emit('connect');
         resolve();
+      };
+
+      this.socket = tls.connect(port, host, options, () => {
+        handleConnect().catch((error) => {
+          if (!this.socket?.destroyed) {
+            this.socket?.destroy();
+          }
+          reject(error);
+        });
       });
 
       this.socket.on('data', (data: Buffer) => {
@@ -188,14 +197,14 @@ export class TlsTransport extends BaseTransport {
   }
 
   /**
-   * 检查服务器身份
-   * 
-   * @private
-   * @param hostname - 主机名
-   * @param cert - 服务器证书
-   * @param trustedFingerprint - 信任的证书指纹
-   * @returns {Error | undefined} 验证失败返回错误，否则返回 undefined
-   */
+     * 检查服务器身份
+     * 
+     * @private
+     * @param hostname - 主机名
+     * @param cert - 服务器证书
+     * @param trustedFingerprint - 信任的证书指纹
+     * @returns {Error | undefined} 验证失败返回错误，否则返回 undefined
+     */
   private checkServerIdentity(
     hostname: string, 
     cert: tls.PeerCertificate,
@@ -206,7 +215,7 @@ export class TlsTransport extends BaseTransport {
     }
 
     const fingerprint = this.getFingerprint(cert);
-    
+        
     if (fingerprint !== trustedFingerprint) {
       const errorMsg = `服务器证书指纹不匹配! 预期: ${trustedFingerprint}, 实际: ${fingerprint}`;
       console.error(errorMsg);
@@ -217,14 +226,14 @@ export class TlsTransport extends BaseTransport {
   }
 
   /**
-   * 获取证书指纹
-   * 
-   * @private
-   * @param cert - 服务器证书
-   * @returns {string} SHA-256 证书指纹
-   * 
-   * @description 计算证书的 SHA-256 指纹
-   */
+     * 获取证书指纹
+     * 
+     * @private
+     * @param cert - 服务器证书
+     * @returns {string} SHA-256 证书指纹
+     * 
+     * @description 计算证书的 SHA-256 指纹
+     */
   private getFingerprint(cert: tls.PeerCertificate): string {
     if (!cert || !cert.raw) {
       return '';
@@ -237,11 +246,11 @@ export class TlsTransport extends BaseTransport {
   }
 
   /**
-   * 保存证书指纹到已知主机
-   * 
-   * @private
-   * @param fingerprint - 证书指纹
-   */
+     * 保存证书指纹到已知主机
+     * 
+     * @private
+     * @param fingerprint - 证书指纹
+     */
   private saveFingerprint(fingerprint: string): void {
     const hostKey = `${this.host}:${this.port}`;
     let knownHosts: Record<string, string> = {};
@@ -260,13 +269,13 @@ export class TlsTransport extends BaseTransport {
   }
 
   /**
-   * 发送数据
-   * 
-   * @param data - 要发送的数据缓冲区
-   * @returns {void}
-   * 
-   * @description 通过 TLS 连接发送数据
-   */
+     * 发送数据
+     * 
+     * @param data - 要发送的数据缓冲区
+     * @returns {void}
+     * 
+     * @description 通过 TLS 连接发送数据
+     */
   send(data: Buffer): void {
     if (this.socket && !this.socket.destroyed) {
       this.socket.write(data);
@@ -274,12 +283,12 @@ export class TlsTransport extends BaseTransport {
   }
 
   /**
-   * 关闭连接
-   * 
-   * @returns {void}
-   * 
-   * @description 销毁 TLS 连接并清理资源
-   */
+     * 关闭连接
+     * 
+     * @returns {void}
+     * 
+     * @description 销毁 TLS 连接并清理资源
+     */
   close(): void {
     if (this.socket) {
       this.socket.destroy();
@@ -289,12 +298,12 @@ export class TlsTransport extends BaseTransport {
   }
 
   /**
-   * 获取服务器证书指纹
-   * 
-   * @returns {string} SHA-256 证书指纹，如果未连接则返回空字符串
-   * 
-   * @description 获取当前连接的服务器证书指纹，用于证书验证和安全检查
-   */
+     * 获取服务器证书指纹
+     * 
+     * @returns {string} SHA-256 证书指纹，如果未连接则返回空字符串
+     * 
+     * @description 获取当前连接的服务器证书指纹，用于证书验证和安全检查
+     */
   getServerFingerprint(): string {
     return this.currentFingerprint;
   }

@@ -7,11 +7,11 @@ import { StatusBar } from './components/StatusBar';
 import { OnlineUser, RoomInfo } from '../shared/protocol/types';
 
 type MessageData = {
-  type: string;
-  sender?: string;
-  content: string;
-  timestamp: string;
-  room?: string;
+    type: string;
+    sender?: string;
+    content: string;
+    timestamp: string;
+    room?: string;
 };
 
 /**
@@ -28,9 +28,9 @@ export class TuiManager {
   private isRunning: boolean = false;
 
   /**
-   * 构造函数
-   * @description 初始化所有 UI 组件并设置基础布局
-   */
+     * 构造函数
+     * @description 初始化所有 UI 组件并设置基础布局
+     */
   constructor() {
     this.screen = blessed.screen({
       smartCSR: true,
@@ -52,9 +52,9 @@ export class TuiManager {
   }
 
   /**
-   * 设置界面布局
-   * @private
-   */
+     * 设置界面布局
+     * @private
+     */
   private setupLayout(): void {
     this.screen.append(this.mainContainer);
     this.chatWindow.appendTo(this.mainContainer);
@@ -66,9 +66,9 @@ export class TuiManager {
   }
 
   /**
-   * 设置键盘快捷键
-   * @private
-   */
+     * 设置键盘快捷键
+     * @private
+     */
   private setupKeyBindings(): void {
     this.screen.key(['C-c'], () => {
       process.exit(0);
@@ -84,82 +84,82 @@ export class TuiManager {
   }
 
   /**
-   * 获取输入回调设置器
-   * @param callback - 输入提交时的回调函数
-   */
+     * 获取输入回调设置器
+     * @param callback - 输入提交时的回调函数
+     */
   setInputCallback(callback: (text: string) => void): void {
     this.inputBar.onSubmit(callback);
   }
 
   /**
-   * 更新用户列表显示
-   * @param users - 用户列表
-   */
+     * 更新用户列表显示
+     * @param users - 用户列表
+     */
   updateUserList(users: OnlineUser[]): void {
     this.userList.update(users);
     this.screen.render();
   }
 
   /**
-   * 更新房间列表显示
-   * @param rooms - 房间列表
-   */
+     * 更新房间列表显示
+     * @param rooms - 房间列表
+     */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   updateRoomList(rooms: RoomInfo[]): void {
     this.screen.render();
   }
 
   /**
-   * 显示消息
-   * @param message - 消息对象
-   */
+     * 显示消息
+     * @param message - 消息对象
+     */
   showMessage(message: {
-    type: string;
-    sender?: string;
-    content: string;
-    timestamp: string;
-    room?: string;
-  }): void {
+        type: string;
+        sender?: string;
+        content: string;
+        timestamp: string;
+        room?: string;
+    }): void {
     this.chatWindow.appendMessage(message);
     this.screen.render();
   }
 
   /**
-   * 更新连接状态
-   * @param status - 状态文本
-   */
+     * 更新连接状态
+     * @param status - 状态文本
+     */
   setStatus(status: string): void {
     this.statusBar.setStatus(status);
     this.screen.render();
   }
 
   /**
-   * 显示文件传输进度
-   * @param progress - 进度百分比 (0-100)
-   */
+     * 显示文件传输进度
+     * @param progress - 进度百分比 (0-100)
+     */
   showFileTransferProgress(progress: number): void {
     this.statusBar.setFileTransfer(progress);
     this.screen.render();
   }
 
   /**
-   * 渲染界面
-   */
+     * 渲染界面
+     */
   render(): void {
     this.screen.render();
   }
 
   /**
-   * 销毁 TUI
-   */
+     * 销毁 TUI
+     */
   destroy(): void {
     this.screen.destroy();
   }
 
   /**
-   * 启动 TUI
-   * @description 开始渲染界面并设置焦点
-   */
+     * 启动 TUI
+     * @description 开始渲染界面并设置焦点
+     */
   start(): void {
     this.isRunning = true;
     this.screen.render();
@@ -167,18 +167,18 @@ export class TuiManager {
   }
 
   /**
-   * 停止 TUI
-   * @description 停止界面渲染并清理资源
-   */
+     * 停止 TUI
+     * @description 停止界面渲染并清理资源
+     */
   stop(): void {
     this.isRunning = false;
     this.destroy();
   }
 
   /**
-   * 添加消息到聊天窗口
-   * @param message - 消息对象
-   */
+     * 添加消息到聊天窗口
+     * @param message - 消息对象
+     */
   appendMessage(message: MessageData): void {
     this.chatWindow.appendMessage(message);
     this.screen.render();

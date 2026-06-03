@@ -7,12 +7,12 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 export interface CertificateOptions {
-  days?: number;
-  commonName?: string;
-  organization?: string;
-  country?: string;
-  state?: string;
-  locality?: string;
+    days?: number;
+    commonName?: string;
+    organization?: string;
+    country?: string;
+    state?: string;
+    locality?: string;
 }
 
 export async function ensureCertificate(certDir: string): Promise<void> {
@@ -26,13 +26,13 @@ export async function ensureCertificate(certDir: string): Promise<void> {
   await fs.promises.mkdir(certDir, { recursive: true });
 
   const hasOpenSSL = await checkOpenSSL();
-  
+    
   if (hasOpenSSL) {
     await generateWithOpenSSL(certPath, keyPath);
   } else {
     throw new Error(
       'OpenSSL not found. Please install OpenSSL to generate TLS certificates. ' +
-      'Alternatively, you can manually place server.crt and server.key in the certs directory.'
+            'Alternatively, you can manually place server.crt and server.key in the certs directory.'
     );
   }
 }

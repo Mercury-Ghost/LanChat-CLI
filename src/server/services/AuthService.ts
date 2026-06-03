@@ -15,10 +15,10 @@ export class AuthService {
   private userRepo: UserRepo;
 
   /**
-   * 构造函数
-   * @param database 数据库实例
-   * @param authManager 认证管理器实例
-   */
+     * 构造函数
+     * @param database 数据库实例
+     * @param authManager 认证管理器实例
+     */
   constructor(database: Database, authManager: AuthManager) {
     this.database = database;
     this.authManager = authManager;
@@ -26,10 +26,10 @@ export class AuthService {
   }
 
   /**
-   * 用户注册
-   * @param request 注册请求，包含昵称和密码
-   * @throws ValidationError 当昵称或密码验证失败时抛出
-   */
+     * 用户注册
+     * @param request 注册请求，包含昵称和密码
+     * @throws ValidationError 当昵称或密码验证失败时抛出
+     */
   async register(request: RegisterRequest): Promise<void> {
     const nicknameValidation = validateNickname(request.nickname);
     if (!nicknameValidation.valid) {
@@ -45,11 +45,11 @@ export class AuthService {
   }
 
   /**
-   * 用户登录
-   * @param request 登录请求，包含昵称和密码
-   * @returns 认证后的用户信息，包含用户ID、昵称和令牌
-   * @throws ValidationError 当昵称或密码验证失败时抛出
-   */
+     * 用户登录
+     * @param request 登录请求，包含昵称和密码
+     * @returns 认证后的用户信息，包含用户ID、昵称和令牌
+     * @throws ValidationError 当昵称或密码验证失败时抛出
+     */
   async login(request: LoginRequest): Promise<AuthenticatedUser> {
     const nicknameValidation = validateNickname(request.nickname);
     if (!nicknameValidation.valid) {
@@ -64,12 +64,12 @@ export class AuthService {
   }
 
   /**
-   * 修改用户密码
-   * @param userId 用户ID
-   * @param oldPassword 原密码
-   * @param newPassword 新密码
-   * @throws ValidationError 当原密码为空或新密码强度不足时抛出
-   */
+     * 修改用户密码
+     * @param userId 用户ID
+     * @param oldPassword 原密码
+     * @param newPassword 新密码
+     * @throws ValidationError 当原密码为空或新密码强度不足时抛出
+     */
   async changePassword(
     userId: number,
     oldPassword: string,
@@ -88,10 +88,10 @@ export class AuthService {
   }
 
   /**
-   * 验证 JWT 令牌
-   * @param token JWT 令牌
-   * @returns 认证用户信息
-   */
+     * 验证 JWT 令牌
+     * @param token JWT 令牌
+     * @returns 认证用户信息
+     */
   verifyToken(token: string): AuthenticatedUser {
     return this.authManager.verifyToken(token);
   }

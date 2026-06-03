@@ -51,15 +51,15 @@ export class TlsServer {
     this.setupEventHandlers();
 
     return new Promise((resolve, reject) => {
-      this.server!.listen(SERVER_PORT, () => {
-        this.logger.info(`服务器监听端口 ${SERVER_PORT}`);
-        resolve();
-      });
+            this.server!.listen(SERVER_PORT, () => {
+              this.logger.info(`服务器监听端口 ${SERVER_PORT}`);
+              resolve();
+            });
 
-      this.server!.on('error', (err) => {
-        this.logger.error('服务器错误', { error: err });
-        reject(err);
-      });
+            this.server!.on('error', (err) => {
+              this.logger.error('服务器错误', { error: err });
+              reject(err);
+            });
     });
   }
 

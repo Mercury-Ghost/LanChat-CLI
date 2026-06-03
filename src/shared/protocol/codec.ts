@@ -11,8 +11,8 @@ export class CodecError extends Error {
 }
 
 export interface DecodedMessage {
-  type: MessageType;
-  payload: Buffer;
+    type: MessageType;
+    payload: Buffer;
 }
 
 export class MessageCodec {

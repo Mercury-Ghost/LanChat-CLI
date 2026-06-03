@@ -37,87 +37,103 @@ class DatabaseConnection {
 }
 
 class Database {
-  private connection: DatabaseConnection;
+  private connections: DatabaseConnection[] = [];
+  private connectionIndex = 0;
+  private readonly poolSize: number;
 
-  constructor() {
-    this.connection = new DatabaseConnection();
+  constructor(poolSize: number = 5) {
+    this.poolSize = poolSize;
+    this.initPool();
+  }
+
+  private initPool(): void {
+    for (let i = 0; i < this.poolSize; i++) {
+      const connection = new DatabaseConnection();
+      this.connections.push(connection);
+    }
+  }
+
+  private getConnection(): DatabaseConnection {
+    this.connectionIndex = (this.connectionIndex + 1) % this.connections.length;
+    return this.connections[this.connectionIndex];
   }
 
   public init(): void {
-    this.createTables();
-    this.createIndexes();
-    this.seedDefaultData();
+    const connection = this.getConnection();
+    this.createTables(connection);
+    this.createIndexes(connection);
+    this.seedDefaultData(connection);
   }
 
-  private createTables(): void {
+  private createTables(connection: DatabaseConnection): void {
     const sql = `
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nickname TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        created_at TEXT DEFAULT (datetime('now'))
-      );
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nickname TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                created_at TEXT DEFAULT (datetime('now'))
+            );
 
-      CREATE TABLE IF NOT EXISTS rooms (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE NOT NULL,
-        created_by INTEGER REFERENCES users(id),
-        is_default INTEGER DEFAULT 0,
-        created_at TEXT DEFAULT (datetime('now'))
-      );
+            CREATE TABLE IF NOT EXISTS rooms (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE NOT NULL,
+                created_by INTEGER REFERENCES users(id),
+                is_default INTEGER DEFAULT 0,
+                created_at TEXT DEFAULT (datetime('now'))
+            );
 
-      CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        room_id INTEGER REFERENCES rooms(id) NOT NULL,
-        sender_id INTEGER REFERENCES users(id) NOT NULL,
-        content TEXT NOT NULL,
-        type TEXT DEFAULT 'chat',
-        timestamp TEXT DEFAULT (datetime('now'))
-      );
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                room_id INTEGER REFERENCES rooms(id) NOT NULL,
+                sender_id INTEGER REFERENCES users(id) NOT NULL,
+                content TEXT NOT NULL,
+                type TEXT DEFAULT 'chat',
+                timestamp TEXT DEFAULT (datetime('now'))
+            );
 
-      CREATE TABLE IF NOT EXISTS private_messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sender_id INTEGER REFERENCES users(id) NOT NULL,
-        receiver_id INTEGER REFERENCES users(id) NOT NULL,
-        content TEXT NOT NULL,
-        timestamp TEXT DEFAULT (datetime('now'))
-      );
+            CREATE TABLE IF NOT EXISTS private_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sender_id INTEGER REFERENCES users(id) NOT NULL,
+                receiver_id INTEGER REFERENCES users(id) NOT NULL,
+                content TEXT NOT NULL,
+                timestamp TEXT DEFAULT (datetime('now'))
+            );
 
-      CREATE TABLE IF NOT EXISTS files (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        transfer_id TEXT UNIQUE NOT NULL,
-        sender_id INTEGER REFERENCES users(id),
-        receiver_id INTEGER,
-        room_id INTEGER REFERENCES rooms(id),
-        file_name TEXT NOT NULL,
-        file_size INTEGER NOT NULL,
-        stored_path TEXT,
-        timestamp TEXT DEFAULT (datetime('now'))
-      );
-    `;
+            CREATE TABLE IF NOT EXISTS files (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                transfer_id TEXT UNIQUE NOT NULL,
+                sender_id INTEGER REFERENCES users(id),
+                receiver_id INTEGER,
+                room_id INTEGER REFERENCES rooms(id),
+                file_name TEXT NOT NULL,
+                file_size INTEGER NOT NULL,
+                stored_path TEXT,
+                timestamp TEXT DEFAULT (datetime('now'))
+            );
+        `;
 
-    this.connection.exec(sql);
+    connection.exec(sql);
   }
 
-  private createIndexes(): void {
+  private createIndexes(connection: DatabaseConnection): void {
     const indexes = `
-      CREATE INDEX IF NOT EXISTS idx_messages_room_time ON messages (room_id, timestamp);
-      CREATE INDEX IF NOT EXISTS idx_private_messages_users_time ON private_messages (sender_id, receiver_id, timestamp);
-      CREATE INDEX IF NOT EXISTS idx_users_nickname ON users (nickname);
-    `;
+            CREATE INDEX IF NOT EXISTS idx_messages_room_time ON messages (room_id, timestamp);
+            CREATE INDEX IF NOT EXISTS idx_private_messages_users_time ON private_messages (sender_id, receiver_id, timestamp);
+            CREATE INDEX IF NOT EXISTS idx_users_nickname ON users (nickname);
+        `;
 
-    this.connection.exec(indexes);
+    connection.exec(indexes);
   }
 
-  private seedDefaultData(): void {
-    const checkRoom = this.connection.prepare(
+  private seedDefaultData(connection: DatabaseConnection): void {
+    const checkRoom = connection.prepare(
       'SELECT id FROM rooms WHERE name = ?'
     );
 
     const existingRoom = checkRoom.get(DEFAULT_ROOM_NAME);
 
     if (!existingRoom) {
-      const insertRoom = this.connection.prepare(
+      const insertRoom = connection.prepare(
         'INSERT INTO rooms (name, is_default) VALUES (?, 1)'
       );
       insertRoom.run(DEFAULT_ROOM_NAME);
@@ -125,16 +141,19 @@ class Database {
   }
 
   prepare(sql: string): DatabaseModule.Statement {
-    return this.connection.prepare(sql);
+    return this.getConnection().prepare(sql);
   }
 
   transaction<T>(fn: () => T): T {
-    const tx = this.connection.transaction(fn) as () => T;
+    const connection = this.getConnection();
+    const tx = connection.transaction(fn) as () => T;
     return tx();
   }
 
   close(): void {
-    this.connection.close();
+    for (const connection of this.connections) {
+      connection.close();
+    }
   }
 }
 

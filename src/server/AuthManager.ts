@@ -3,6 +3,7 @@ import * as argon2 from 'argon2';
 import { Database } from './Database';
 import { UserRepo } from './repositories/UserRepo';
 import { AuthError, ValidationError } from '../shared/errors';
+import { validatePasswordStrength } from '../shared/validators';
 import {
   JWT_SECRET,
   JWT_EXPIRES_IN,
@@ -25,10 +26,6 @@ export class AuthManager {
   async register(request: RegisterRequest): Promise<void> {
     const { nickname, password } = request;
 
-    if (!nickname || !password) {
-      throw new ValidationError('昵称和密码不能为空');
-    }
-
     const existingUser = this.userRepo.findByNickname(nickname);
     if (existingUser) {
       throw new AuthError('昵称已被占用');
@@ -36,8 +33,6 @@ export class AuthManager {
 
     const hashedPassword = await this.hashPassword(password);
     this.userRepo.create(nickname, hashedPassword);
-
-    return;
   }
 
   async login(request: LoginRequest): Promise<AuthenticatedUser> {
@@ -94,9 +89,9 @@ export class AuthManager {
   verifyToken(token: string): AuthenticatedUser {
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as {
-        sub: string;
-        nickname: string;
-      };
+                sub: string;
+                nickname: string;
+            };
 
       return {
         userId: parseInt(decoded.sub, 10),
@@ -117,6 +112,11 @@ export class AuthManager {
     const isValid = await this.verifyPassword(oldPassword, user.password);
     if (!isValid) {
       throw new AuthError('原密码错误');
+    }
+
+    const passwordValidation = validatePasswordStrength(newPassword);
+    if (!passwordValidation.valid) {
+      throw new ValidationError(passwordValidation.error!);
     }
 
     const hashedPassword = await this.hashPassword(newPassword);

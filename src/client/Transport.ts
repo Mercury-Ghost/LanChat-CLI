@@ -9,53 +9,53 @@ import { EventEmitter } from 'events';
  * @interface ITransport
  */
 export interface ITransport {
-  /**
-   * 连接到服务器
-   * 
-   * @param host - 服务器主机地址
-   * @param port - 服务器端口号
-   * @returns {Promise<void>} 连接成功后 resolve
-   * @throws {Error} 连接失败时抛出错误
-   */
-  connect(host: string, port: number): Promise<void>;
+    /**
+     * 连接到服务器
+     * 
+     * @param host - 服务器主机地址
+     * @param port - 服务器端口号
+     * @returns {Promise<void>} 连接成功后 resolve
+     * @throws {Error} 连接失败时抛出错误
+     */
+    connect(host: string, port: number): Promise<void>;
 
-  /**
-   * 发送数据
-   * 
-   * @param data - 要发送的数据缓冲区
-   * @returns {void}
-   */
-  send(data: Buffer): void;
+    /**
+     * 发送数据
+     * 
+     * @param data - 要发送的数据缓冲区
+     * @returns {void}
+     */
+    send(data: Buffer): void;
 
-  /**
-   * 关闭连接
-   * 
-   * @returns {void}
-   */
-  close(): void;
+    /**
+     * 关闭连接
+     * 
+     * @returns {void}
+     */
+    close(): void;
 
-  /**
-   * 检查是否已连接
-   * 
-   * @returns {boolean} 如果已连接返回 true
-   */
-  isConnected(): boolean;
+    /**
+     * 检查是否已连接
+     * 
+     * @returns {boolean} 如果已连接返回 true
+     */
+    isConnected(): boolean;
 
-  /**
-   * 获取服务器证书指纹
-   * 
-   * @returns {string} SHA-256 证书指纹，如果未连接则返回空字符串
-   */
-  getServerFingerprint(): string;
+    /**
+     * 获取服务器证书指纹
+     * 
+     * @returns {string} SHA-256 证书指纹，如果未连接则返回空字符串
+     */
+    getServerFingerprint(): string;
 
-  /**
-   * 注册事件监听器
-   */
-  on(event: 'connect', listener: () => void): this;
-  on(event: 'close', listener: () => void): this;
-  on(event: 'message', listener: (data: Buffer) => void): this;
-  on(event: 'error', listener: (error: Error) => void): this;
-  on(event: string, listener: (...args: unknown[]) => void): this;
+    /**
+     * 注册事件监听器
+     */
+    on(event: 'connect', listener: () => void): this;
+    on(event: 'close', listener: () => void): this;
+    on(event: 'message', listener: (data: Buffer) => void): this;
+    on(event: 'error', listener: (error: Error) => void): this;
+    on(event: string, listener: (...args: unknown[]) => void): this;
 }
 
 /**
@@ -64,14 +64,14 @@ export interface ITransport {
  * @description 定义传输层可能发出的事件类型
  */
 export enum TransportEvent {
-  /** 连接成功事件 */
-  CONNECT = 'connect',
-  /** 连接关闭事件 */
-  CLOSE = 'close',
-  /** 接收到消息事件 */
-  MESSAGE = 'message',
-  /** 连接错误事件 */
-  ERROR = 'error',
+    /** 连接成功事件 */
+    CONNECT = 'connect',
+    /** 连接关闭事件 */
+    CLOSE = 'close',
+    /** 接收到消息事件 */
+    MESSAGE = 'message',
+    /** 连接错误事件 */
+    ERROR = 'error',
 }
 
 /**
@@ -92,23 +92,23 @@ export class BaseTransport extends EventEmitter implements ITransport {
   }
 
   /**
-   * 连接到服务器
-   * 
-   * @param host - 服务器主机地址
-   * @param port - 服务器端口号
-   * @returns {Promise<void>} 连接成功后 resolve
-   * @throws {Error} 连接失败时抛出错误
-   */
+     * 连接到服务器
+     * 
+     * @param host - 服务器主机地址
+     * @param port - 服务器端口号
+     * @returns {Promise<void>} 连接成功后 resolve
+     * @throws {Error} 连接失败时抛出错误
+     */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async connect(host: string, port: number): Promise<void> {
     throw new Error('方法未实现: connect');
   }
 
   /**
-   * 发送数据
-   * 
-   * @param data - 要发送的数据缓冲区
-   */
+     * 发送数据
+     * 
+     * @param data - 要发送的数据缓冲区
+     */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   send(data: Buffer): void {
     if (!this.isSocketConnected) {
@@ -117,28 +117,28 @@ export class BaseTransport extends EventEmitter implements ITransport {
   }
 
   /**
-   * 关闭连接
-   */
+     * 关闭连接
+     */
   close(): void {
     this.isSocketConnected = false;
   }
 
   /**
-   * 检查连接状态
-   * 
-   * @returns {boolean} 如果已连接返回 true
-   */
+     * 检查连接状态
+     * 
+     * @returns {boolean} 如果已连接返回 true
+     */
   isConnected(): boolean {
     return this.isSocketConnected;
   }
 
   /**
-   * 获取服务器证书指纹
-   * 
-   * @returns {string} SHA-256 证书指纹，如果未连接则返回空字符串
-   * 
-   * @description 默认实现返回空字符串，子类可以覆盖此方法
-   */
+     * 获取服务器证书指纹
+     * 
+     * @returns {string} SHA-256 证书指纹，如果未连接则返回空字符串
+     * 
+     * @description 默认实现返回空字符串，子类可以覆盖此方法
+     */
   getServerFingerprint(): string {
     return '';
   }

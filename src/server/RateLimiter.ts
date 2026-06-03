@@ -1,11 +1,11 @@
 export interface RateLimitConfig {
-  requestsPerWindow: number;
-  windowMs: number;
+    requestsPerWindow: number;
+    windowMs: number;
 }
 
 interface RequestRecord {
-  count: number;
-  startTime: number;
+    count: number;
+    startTime: number;
 }
 
 export class RateLimiter {

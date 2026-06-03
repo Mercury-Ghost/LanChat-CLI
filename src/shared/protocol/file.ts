@@ -1,18 +1,18 @@
 import { CHUNK_SIZE } from '../constants';
 
 export interface FileChunk {
-  transferId: string;
-  chunkIndex: number;
-  data: Buffer;
-  isLast: boolean;
+    transferId: string;
+    chunkIndex: number;
+    data: Buffer;
+    isLast: boolean;
 }
 
 export interface FileMetadata {
-  transferId: string;
-  fileName: string;
-  fileSize: number;
-  totalChunks: number;
-  receivedChunks: Set<number>;
+    transferId: string;
+    fileName: string;
+    fileSize: number;
+    totalChunks: number;
+    receivedChunks: Set<number>;
 }
 
 export class FileSplitter {

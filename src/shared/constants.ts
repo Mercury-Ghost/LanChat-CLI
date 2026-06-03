@@ -1,3 +1,5 @@
+import * as crypto from 'crypto';
+
 /**
  * 服务器监听端口
  */
@@ -5,24 +7,32 @@ export const SERVER_PORT = parseInt(process.env.PORT || '9527', 10);
 
 /**
  * JWT 密钥
- * 通过环境变量 JWT_SECRET 设置，测试环境使用默认值，生产环境必须设置
+ * 通过环境变量 JWT_SECRET 设置，生产环境必须设置，开发环境自动生成随机密钥
  */
 const isProduction = process.env.NODE_ENV === 'production';
-const defaultJwtSecret = 'lanchat-test-secret-key-12345';
 const jwtSecretFromEnv = process.env.JWT_SECRET;
-
-if (isProduction && !jwtSecretFromEnv) {
-  throw new Error(
-    '生产环境必须设置 JWT_SECRET 环境变量。' +
-    '请设置一个强密钥（至少 32 个字符）。'
-  );
-}
 
 if (jwtSecretFromEnv && jwtSecretFromEnv.length < 32) {
   console.warn('警告: JWT_SECRET 建议至少 32 个字符以获得更高安全性。');
 }
 
-export const JWT_SECRET = jwtSecretFromEnv || (isProduction ? '' : defaultJwtSecret);
+function generateRandomSecret(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+let jwtSecret: string;
+
+if (jwtSecretFromEnv) {
+  jwtSecret = jwtSecretFromEnv;
+} else if (isProduction) {
+  throw new Error('生产环境必须设置 JWT_SECRET 环境变量。请设置一个强密钥（至少 32 个字符）。');
+} else {
+  const generatedSecret = generateRandomSecret();
+  console.warn('⚠️  开发环境：使用自动生成的临时密钥，生产环境请设置 JWT_SECRET 环境变量');
+  jwtSecret = generatedSecret;
+}
+
+export const JWT_SECRET = jwtSecret;
 
 /**
  * JWT 令牌过期时间（秒），默认 24 小时

@@ -1,10 +1,10 @@
 import { Database } from '../Database';
 
 export interface User {
-  id: number;
-  nickname: string;
-  password: string;
-  created_at: string;
+    id: number;
+    nickname: string;
+    password: string;
+    created_at: string;
 }
 
 export class UserRepo {

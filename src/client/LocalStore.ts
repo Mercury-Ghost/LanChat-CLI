@@ -9,11 +9,11 @@ import * as os from 'os';
 export class LocalStore {
   private storePath: string;
   private data: {
-    token?: string;
-    nickname?: string;
-    knownHosts?: Record<string, string>;
-    settings?: Record<string, unknown>;
-  };
+        token?: string;
+        nickname?: string;
+        knownHosts?: Record<string, string>;
+        settings?: Record<string, unknown>;
+    };
 
   constructor() {
     this.storePath = path.join(os.homedir(), '.lanchat', 'config.json');

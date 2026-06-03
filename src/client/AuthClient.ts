@@ -24,39 +24,39 @@ import { LocalStore } from './LocalStore';
 export class AuthClient {
   /** 传输层实例 */
   private transport: Transport;
-  
+    
   /** 本地存储实例 */
   private localStore: LocalStore;
 
   /**
-   * 构造函数
-   * 
-   * @param transport - 传输层实例
-   */
+     * 构造函数
+     * 
+     * @param transport - 传输层实例
+     */
   constructor(transport: Transport) {
     this.transport = transport;
     this.localStore = new LocalStore();
   }
 
   /**
-   * 用户登录
-   * 
-   * @param nickname - 用户昵称
-   * @param password - 用户密码
-   * @returns {Promise<void>} 登录请求发送成功后 resolve
-   * 
-   * @description 向服务器发送登录请求
-   * 
-   * @example
-   * ```typescript
-   * try {
-   *   await auth.login('alice', 'password123');
-   *   console.log('登录成功');
-   * } catch (error) {
-   *   console.error('登录失败:', error.message);
-   * }
-   * ```
-   */
+     * 用户登录
+     * 
+     * @param nickname - 用户昵称
+     * @param password - 用户密码
+     * @returns {Promise<void>} 登录请求发送成功后 resolve
+     * 
+     * @description 向服务器发送登录请求
+     * 
+     * @example
+     * ```typescript
+     * try {
+     *   await auth.login('alice', 'password123');
+     *   console.log('登录成功');
+     * } catch (error) {
+     *   console.error('登录失败:', error.message);
+     * }
+     * ```
+     */
   async login(nickname: string, password: string): Promise<void> {
     const request: LoginRequest = {
       nickname,
@@ -68,24 +68,24 @@ export class AuthClient {
   }
 
   /**
-   * 用户注册
-   * 
-   * @param nickname - 选择的昵称
-   * @param password - 设置的密码
-   * @returns {Promise<void>} 注册请求发送成功后 resolve
-   * 
-   * @description 向服务器发送注册请求
-   * 
-   * @example
-   * ```typescript
-   * try {
-   *   await auth.register('newuser', 'password123');
-   *   console.log('注册成功');
-   * } catch (error) {
-   *   console.error('注册失败:', error.message);
-   * }
-   * ```
-   */
+     * 用户注册
+     * 
+     * @param nickname - 选择的昵称
+     * @param password - 设置的密码
+     * @returns {Promise<void>} 注册请求发送成功后 resolve
+     * 
+     * @description 向服务器发送注册请求
+     * 
+     * @example
+     * ```typescript
+     * try {
+     *   await auth.register('newuser', 'password123');
+     *   console.log('注册成功');
+     * } catch (error) {
+     *   console.error('注册失败:', error.message);
+     * }
+     * ```
+     */
   async register(nickname: string, password: string): Promise<void> {
     const request: RegisterRequest = {
       nickname,
@@ -97,14 +97,14 @@ export class AuthClient {
   }
 
   /**
-   * 修改密码
-   * 
-   * @param oldPassword - 旧密码
-   * @param newPassword - 新密码
-   * @returns {Promise<void>} 密码修改请求发送成功后 resolve
-   * 
-   * @description 向服务器发送密码修改请求（需要已登录）
-   */
+     * 修改密码
+     * 
+     * @param oldPassword - 旧密码
+     * @param newPassword - 新密码
+     * @returns {Promise<void>} 密码修改请求发送成功后 resolve
+     * 
+     * @description 向服务器发送密码修改请求（需要已登录）
+     */
   async changePassword(oldPassword: string, newPassword: string): Promise<void> {
     const request: ChangePasswordRequest = {
       oldPassword,

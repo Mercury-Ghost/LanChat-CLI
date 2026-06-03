@@ -4,6 +4,7 @@ import * as winston from 'winston';
 import { Logger } from 'winston';
 import { ensureCertificate, loadConfig, getConfig } from '../shared';
 import * as path from 'path';
+import * as fs from 'fs';
 
 async function main(): Promise<void> {
   loadConfig();
@@ -24,23 +25,55 @@ async function main(): Promise<void> {
     const tlsServer = new TlsServer(database, logger);
     await tlsServer.start();
 
-    logger.info('服务器启动成功');
+    logger.info('服务器启动成功', { port: config.serverPort });
   } catch (error) {
-    logger.error('服务器启动失败', { error });
+    logger.error('服务器启动失败', { error: error instanceof Error ? error.message : error });
     process.exit(1);
   }
 }
 
 function createLogger(): Logger {
+  const logsDir = path.join(process.cwd(), 'logs');
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+  }
+
+  const consoleFormat = winston.format.combine(
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    winston.format.colorize(),
+    winston.format.printf(({ timestamp, level, message, ...meta }) => {
+      const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
+      return `${timestamp} [${level}]: ${message}${metaStr}`;
+    })
+  );
+
+  const fileFormat = winston.format.combine(
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    winston.format.json()
+  );
+
   return winston.createLogger({
     level: process.env.LOG_LEVEL || 'info',
-    format: winston.format.combine(
-      winston.format.timestamp(),
-      winston.format.json()
-    ),
+    levels: winston.config.npm.levels,
+    format: fileFormat,
     transports: [
-      new winston.transports.Console(),
-      new winston.transports.File({ filename: 'logs/server.log' }),
+      new winston.transports.Console({
+        format: consoleFormat,
+        level: process.env.LOG_LEVEL || 'info',
+      }),
+      new winston.transports.File({
+        filename: path.join(logsDir, 'server.log'),
+        maxsize: 10485760,
+        maxFiles: 5,
+        tailable: true,
+      }),
+      new winston.transports.File({
+        filename: path.join(logsDir, 'server-error.log'),
+        level: 'error',
+        maxsize: 10485760,
+        maxFiles: 5,
+        tailable: true,
+      }),
     ],
   });
 }

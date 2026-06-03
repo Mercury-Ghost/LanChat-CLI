@@ -6,10 +6,10 @@ describe('MessageCodec', () => {
     it('should encode and decode string payload correctly', () => {
       const type = MessageType.CHAT_ROOM;
       const payload = 'Hello, world!';
-      
+            
       const encoded = MessageCodec.encode(type, payload);
       const decoded = MessageCodec.decode(encoded);
-      
+            
       expect(decoded.type).toBe(type);
       expect(decoded.payload.toString()).toBe(payload);
     });
@@ -17,10 +17,10 @@ describe('MessageCodec', () => {
     it('should encode and decode Buffer payload correctly', () => {
       const type = MessageType.FILE_CHUNK;
       const payload = Buffer.from([0x01, 0x02, 0x03]);
-      
+            
       const encoded = MessageCodec.encode(type, payload);
       const decoded = MessageCodec.decode(encoded);
-      
+            
       expect(decoded.type).toBe(type);
       expect(decoded.payload).toEqual(payload);
     });
@@ -28,10 +28,10 @@ describe('MessageCodec', () => {
     it('should encode and decode JSON payload correctly', () => {
       const type = MessageType.LOGIN_REQUEST;
       const payload = { username: 'test', password: 'pass' };
-      
+            
       const encoded = MessageCodec.encodeJson(type, payload);
       const decoded = MessageCodec.decodeJson<typeof payload>(encoded);
-      
+            
       expect(decoded.type).toBe(type);
       expect(decoded.payload).toEqual(payload);
     });
@@ -54,9 +54,9 @@ describe('MessageCodec', () => {
       const msg1 = MessageCodec.encode(MessageType.CHAT_ROOM, 'Message 1');
       const msg2 = MessageCodec.encode(MessageType.CHAT_PRIVATE, 'Message 2');
       const stream = Buffer.concat([msg1, msg2]);
-      
+            
       const { messages, remaining } = MessageCodec.parseStream(stream);
-      
+            
       expect(messages.length).toBe(2);
       expect(messages[0].type).toBe(MessageType.CHAT_ROOM);
       expect(messages[0].payload.toString()).toBe('Message 1');
@@ -70,9 +70,9 @@ describe('MessageCodec', () => {
       // Create a frame header that says it needs 10 bytes, but we only provide 6
       const incomplete = Buffer.from([0x00, 0x00, 0x00, 0x0A, 0x01, 0x02]); 
       const stream = Buffer.concat([msg1, incomplete]);
-      
+            
       const { messages, remaining } = MessageCodec.parseStream(stream);
-      
+            
       expect(messages.length).toBe(1);
       expect(remaining).toEqual(incomplete);
     });

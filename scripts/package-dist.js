@@ -44,6 +44,22 @@ async function main() {
 
       // 复制 package.json 并修改为生产版本
       const packageJson = require(path.join(rootDir, 'package.json'));
+      
+      const serverDependencies = {
+        'argon2': packageJson.dependencies['argon2'] || packageJson.optionalDependencies['argon2'],
+        'better-sqlite3': packageJson.dependencies['better-sqlite3'] || packageJson.optionalDependencies['better-sqlite3'],
+        'dotenv': packageJson.dependencies['dotenv'],
+        'jsonwebtoken': packageJson.dependencies['jsonwebtoken'],
+        'uuid': packageJson.dependencies['uuid'],
+        'winston': packageJson.dependencies['winston']
+      };
+
+      const clientDependencies = {
+        'blessed': packageJson.dependencies['blessed'],
+        'dotenv': packageJson.dependencies['dotenv'],
+        'uuid': packageJson.dependencies['uuid']
+      };
+
       const prodPackageJson = {
         name: packageJson.name,
         version: packageJson.version,
@@ -52,8 +68,7 @@ async function main() {
         scripts: {
           'start': target === 'server' ? 'node server/index.js' : 'node client/index.js'
         },
-        dependencies: packageJson.dependencies,
-        optionalDependencies: packageJson.optionalDependencies,
+        dependencies: target === 'server' ? serverDependencies : clientDependencies,
         keywords: packageJson.keywords,
         author: packageJson.author,
         license: packageJson.license,

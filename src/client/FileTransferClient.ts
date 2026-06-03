@@ -48,46 +48,46 @@ type ErrorCallback = (_error: Error) => void;
 export class FileTransferClient {
   /** 传输层实例 */
   private transport: Transport;
-  
+    
   /** 本地存储实例 */
   private localStore: LocalStore;
-  
+    
   /** 文件块大小 (64KB) */
   private chunkSize: number = 65536;
-  
+    
   /** 最大文件大小 (500MB) */
   private maxFileSize: number = 524288000;
-  
+    
   /** 临时文件存储目录 */
   private tempDir: string;
-  
+    
   /** 进度回调函数 */
   private progressCallback?: ProgressCallback;
-  
+    
   /** 完成回调函数 */
   private completeCallback?: CompleteCallback;
-  
+    
   /** 错误回调函数 */
   private errorCallback?: ErrorCallback;
 
   /**
-   * 活跃传输任务映射
-   */
+     * 活跃传输任务映射
+     */
   private activeTransfers: Map<
-    string,
-    {
-      stream: fs.WriteStream | null;
-      totalBytes: number;
-      receivedBytes: number;
-      tempPath: string;
-    }
-  > = new Map();
+        string,
+        {
+            stream: fs.WriteStream | null;
+            totalBytes: number;
+            receivedBytes: number;
+            tempPath: string;
+        }
+    > = new Map();
 
   /**
-   * 构造函数
-   * 
-   * @param transport - 传输层实例
-   */
+     * 构造函数
+     * 
+     * @param transport - 传输层实例
+     */
   constructor(transport: Transport) {
     this.transport = transport;
     this.localStore = new LocalStore();
@@ -99,40 +99,40 @@ export class FileTransferClient {
   }
 
   /**
-   * 设置进度回调
-   * 
-   * @param callback - 进度更新回调函数
-   */
+     * 设置进度回调
+     * 
+     * @param callback - 进度更新回调函数
+     */
   onProgress(callback: ProgressCallback): void {
     this.progressCallback = callback;
   }
 
   /**
-   * 设置完成回调
-   * 
-   * @param callback - 传输完成回调函数
-   */
+     * 设置完成回调
+     * 
+     * @param callback - 传输完成回调函数
+     */
   onComplete(callback: CompleteCallback): void {
     this.completeCallback = callback;
   }
 
   /**
-   * 设置错误回调
-   * 
-   * @param callback - 错误发生回调函数
-   */
+     * 设置错误回调
+     * 
+     * @param callback - 错误发生回调函数
+     */
   onError(callback: ErrorCallback): void {
     this.errorCallback = callback;
   }
 
   /**
-   * 发送文件
-   * 
-   * @param targetNickname - 目标用户昵称
-   * @param filePath - 要发送的文件路径
-   * @returns {Promise<void>} 文件发送成功后 resolve
-   * @throws {Error} 文件不存在或大小超限时抛出错误
-   */
+     * 发送文件
+     * 
+     * @param targetNickname - 目标用户昵称
+     * @param filePath - 要发送的文件路径
+     * @returns {Promise<void>} 文件发送成功后 resolve
+     * @throws {Error} 文件不存在或大小超限时抛出错误
+     */
   async sendFile(targetNickname: string, filePath: string): Promise<void> {
     if (!fs.existsSync(filePath)) {
       throw new Error(`文件不存在: ${filePath}`);
@@ -162,12 +162,12 @@ export class FileTransferClient {
 
     return new Promise((resolve, reject) => {
       const readStream = fs.createReadStream(filePath, { highWaterMark: this.chunkSize });
-      
+            
       readStream.on('data', (chunk: string | Buffer) => {
         readStream.pause();
-        
+                
         const chunkBuffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-        
+                
         const chunkPayload: FileChunkPayload = {
           transferId,
           data: chunkBuffer.toString('base64'),
@@ -210,10 +210,10 @@ export class FileTransferClient {
   }
 
   /**
-   * 处理文件响应
-   * 
-   * @param payload - 响应数据
-   */
+     * 处理文件响应
+     * 
+     * @param payload - 响应数据
+     */
   handleFileResponse(payload: Buffer): void {
     try {
       const response = JSON.parse(payload.toString()) as FileResponsePayload;
@@ -231,10 +231,10 @@ export class FileTransferClient {
   }
 
   /**
-   * 处理文件数据块
-   * 
-   * @param payload - 文件块数据
-   */
+     * 处理文件数据块
+     * 
+     * @param payload - 文件块数据
+     */
   handleFileChunk(payload: Buffer): void {
     try {
       const chunkData = JSON.parse(payload.toString()) as FileChunkPayload;
@@ -264,10 +264,10 @@ export class FileTransferClient {
   }
 
   /**
-   * 处理文件传输结束
-   * 
-   * @param payload - 结束数据
-   */
+     * 处理文件传输结束
+     * 
+     * @param payload - 结束数据
+     */
   handleFileEnd(payload: Buffer): void {
     try {
       const endData = JSON.parse(payload.toString()) as FileEndPayload;
@@ -292,20 +292,20 @@ export class FileTransferClient {
   }
 
   /**
-   * 处理文件传输进度更新
-   * 
-   * @param payload - 进度数据
-   */
+     * 处理文件传输进度更新
+     * 
+     * @param payload - 进度数据
+     */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleFileProgress(payload: Buffer): void {
     // 服务端进度更新处理
   }
 
   /**
-   * 取消文件传输
-   * 
-   * @param fileId - 文件传输 ID
-   */
+     * 取消文件传输
+     * 
+     * @param fileId - 文件传输 ID
+     */
   cancelTransfer(fileId: string): void {
     const transfer = this.activeTransfers.get(fileId);
     if (transfer) {

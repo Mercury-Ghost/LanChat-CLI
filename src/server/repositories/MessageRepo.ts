@@ -2,16 +2,16 @@ import { Database } from '../Database';
 import { DEFAULT_HISTORY_COUNT } from '../../shared/constants';
 
 export interface Message {
-  id: number;
-  room_id: number;
-  sender_id: number;
-  content: string;
-  type: string;
-  timestamp: string;
+    id: number;
+    room_id: number;
+    sender_id: number;
+    content: string;
+    type: string;
+    timestamp: string;
 }
 
 export interface MessageWithSender extends Message {
-  sender_nickname: string;
+    sender_nickname: string;
 }
 
 export class MessageRepo {
@@ -54,13 +54,13 @@ export class MessageRepo {
     offset: number = 0
   ): MessageWithSender[] {
     const stmt = this.database.prepare(`
-      SELECT m.*, u.nickname as sender_nickname
-      FROM messages m
-      JOIN users u ON m.sender_id = u.id
-      WHERE m.room_id = ?
-      ORDER BY m.timestamp DESC
-      LIMIT ? OFFSET ?
-    `);
+            SELECT m.*, u.nickname as sender_nickname
+            FROM messages m
+            JOIN users u ON m.sender_id = u.id
+            WHERE m.room_id = ?
+            ORDER BY m.timestamp DESC
+            LIMIT ? OFFSET ?
+        `);
 
     return stmt.all(roomId, limit, offset) as MessageWithSender[];
   }
@@ -72,21 +72,21 @@ export class MessageRepo {
     offset: number = 0
   ): Array<Message & { sender_nickname: string; receiver_nickname: string }> {
     const stmt = this.database.prepare(`
-      SELECT pm.*,
-             sender.nickname as sender_nickname,
-             receiver.nickname as receiver_nickname
-      FROM private_messages pm
-      JOIN users sender ON pm.sender_id = sender.id
-      JOIN users receiver ON pm.receiver_id = receiver.id
-      WHERE (pm.sender_id = ? AND pm.receiver_id = ?)
-         OR (pm.sender_id = ? AND pm.receiver_id = ?)
-      ORDER BY pm.timestamp DESC
-      LIMIT ? OFFSET ?
-    `);
+            SELECT pm.*,
+                         sender.nickname as sender_nickname,
+                         receiver.nickname as receiver_nickname
+            FROM private_messages pm
+            JOIN users sender ON pm.sender_id = sender.id
+            JOIN users receiver ON pm.receiver_id = receiver.id
+            WHERE (pm.sender_id = ? AND pm.receiver_id = ?)
+                 OR (pm.sender_id = ? AND pm.receiver_id = ?)
+            ORDER BY pm.timestamp DESC
+            LIMIT ? OFFSET ?
+        `);
 
     return stmt.all(userId1, userId2, userId2, userId1, limit, offset) as Array<
-      Message & { sender_nickname: string; receiver_nickname: string }
-    >;
+            Message & { sender_nickname: string; receiver_nickname: string }
+        >;
   }
 
   getMessageById(id: number): Message | undefined {
@@ -96,14 +96,14 @@ export class MessageRepo {
 
   deleteOldMessages(roomId: number, keepCount: number): number {
     const stmt = this.database.prepare(`
-      DELETE FROM messages
-      WHERE room_id = ? AND id NOT IN (
-        SELECT id FROM messages
-        WHERE room_id = ?
-        ORDER BY timestamp DESC
-        LIMIT ?
-      )
-    `);
+            DELETE FROM messages
+            WHERE room_id = ? AND id NOT IN (
+                SELECT id FROM messages
+                WHERE room_id = ?
+                ORDER BY timestamp DESC
+                LIMIT ?
+            )
+        `);
 
     const result = stmt.run(roomId, roomId, keepCount);
     return result.changes;

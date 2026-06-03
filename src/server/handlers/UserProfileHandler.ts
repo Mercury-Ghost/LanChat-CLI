@@ -11,6 +11,8 @@ import {
   UserListMessage,
 } from '../../shared/protocol/types';
 import { MessageCodec } from '../../shared/protocol/codec';
+import { validateNickname } from '../../shared/validators';
+import { ValidationError } from '../../shared/errors';
 
 export class UserProfileHandler {
   private userManager: UserManager;
@@ -40,6 +42,11 @@ export class UserProfileHandler {
   ): void {
     const { payload: data } = MessageCodec.decodeJson<NickChangeRequest & { token: string }>(payload);
     const request = data as NickChangeRequest;
+
+    const nicknameValidation = validateNickname(request.newNickname);
+    if (!nicknameValidation.valid) {
+      throw new ValidationError(nicknameValidation.error!);
+    }
 
     const success = this.userManager.updateNickname(socketId, request.newNickname);
 

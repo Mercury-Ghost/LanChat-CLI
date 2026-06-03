@@ -9,9 +9,9 @@ import { FileMetadata, FileSplitter } from '../shared/protocol/file';
 import { ValidationError, ResourceLimitError } from '../shared/errors';
 
 interface TempFile {
-  writeStream: fs.WriteStream;
-  drainPromise: Promise<void> | null;
-  error: Error | null;
+    writeStream: fs.WriteStream;
+    drainPromise: Promise<void> | null;
+    error: Error | null;
 }
 
 export class FileTransferHandler {

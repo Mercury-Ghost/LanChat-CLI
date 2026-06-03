@@ -1,11 +1,11 @@
 import { Database } from '../Database';
 
 export interface Room {
-  id: number;
-  name: string;
-  created_by: number | null;
-  is_default: number;
-  created_at: string;
+    id: number;
+    name: string;
+    created_by: number | null;
+    is_default: number;
+    created_at: string;
 }
 
 export class RoomRepo {

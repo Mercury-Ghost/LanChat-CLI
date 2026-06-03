@@ -11,7 +11,8 @@ import {
   UserListMessage,
 } from '../../shared/protocol/types';
 import { MessageCodec } from '../../shared/protocol/codec';
-import { AppError, ErrorCode } from '../../shared/errors';
+import { AppError, ErrorCode, ValidationError } from '../../shared/errors';
+import { validateRoomName } from '../../shared/validators';
 
 export class RoomHandler {
   private userManager: UserManager;
@@ -41,6 +42,11 @@ export class RoomHandler {
   ): void {
     const { payload: data } = MessageCodec.decodeJson<RoomJoinRequest & { token: string }>(payload);
     const request = data as RoomJoinRequest;
+
+    const roomNameValidation = validateRoomName(request.roomName);
+    if (!roomNameValidation.valid) {
+      throw new ValidationError(roomNameValidation.error!);
+    }
 
     if (!this.roomManager.roomExists(request.roomName)) {
       throw new AppError(ErrorCode.ROOM_NOT_FOUND, '房间不存在');

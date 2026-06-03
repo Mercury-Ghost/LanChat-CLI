@@ -53,12 +53,12 @@ export class ChatWindow {
   }
 
   appendMessage(message: {
-    type: string;
-    sender?: string;
-    content: string;
-    timestamp: string;
-    room?: string;
-  }): void {
+        type: string;
+        sender?: string;
+        content: string;
+        timestamp: string;
+        room?: string;
+    }): void {
     const time = new Date(message.timestamp).toLocaleTimeString();
     let line: string;
 

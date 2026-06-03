@@ -1,25 +1,25 @@
 import { Database } from '../Database';
 
 export interface FileRecord {
-  id: number;
-  transfer_id: string;
-  sender_id: number | null;
-  receiver_id: number | null;
-  room_id: number | null;
-  file_name: string;
-  file_size: number;
-  stored_path: string | null;
-  timestamp: string;
+    id: number;
+    transfer_id: string;
+    sender_id: number | null;
+    receiver_id: number | null;
+    room_id: number | null;
+    file_name: string;
+    file_size: number;
+    stored_path: string | null;
+    timestamp: string;
 }
 
 export interface CreateFileRecord {
-  transferId: string;
-  senderId: number;
-  receiverId?: number | null;
-  roomId?: number | null;
-  fileName: string;
-  fileSize: number;
-  storedPath?: string;
+    transferId: string;
+    senderId: number;
+    receiverId?: number | null;
+    roomId?: number | null;
+    fileName: string;
+    fileSize: number;
+    storedPath?: string;
 }
 
 export class FileRepo {
@@ -31,9 +31,9 @@ export class FileRepo {
 
   create(record: CreateFileRecord): number {
     const stmt = this.database.prepare(`
-      INSERT INTO files (transfer_id, sender_id, receiver_id, room_id, file_name, file_size, stored_path)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `);
+            INSERT INTO files (transfer_id, sender_id, receiver_id, room_id, file_name, file_size, stored_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
 
     const result = stmt.run(
       record.transferId,
@@ -62,22 +62,22 @@ export class FileRepo {
 
   getUserFiles(userId: number, limit: number = 50): FileRecord[] {
     const stmt = this.database.prepare(`
-      SELECT * FROM files
-      WHERE sender_id = ? OR receiver_id = ?
-      ORDER BY timestamp DESC
-      LIMIT ?
-    `);
+            SELECT * FROM files
+            WHERE sender_id = ? OR receiver_id = ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+        `);
 
     return stmt.all(userId, userId, limit) as FileRecord[];
   }
 
   getRoomFiles(roomId: number, limit: number = 50): FileRecord[] {
     const stmt = this.database.prepare(`
-      SELECT * FROM files
-      WHERE room_id = ?
-      ORDER BY timestamp DESC
-      LIMIT ?
-    `);
+            SELECT * FROM files
+            WHERE room_id = ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+        `);
 
     return stmt.all(roomId, limit) as FileRecord[];
   }
@@ -89,10 +89,10 @@ export class FileRepo {
 
   getAll(limit: number = 100): FileRecord[] {
     const stmt = this.database.prepare(`
-      SELECT * FROM files
-      ORDER BY timestamp DESC
-      LIMIT ?
-    `);
+            SELECT * FROM files
+            ORDER BY timestamp DESC
+            LIMIT ?
+        `);
 
     return stmt.all(limit) as FileRecord[];
   }

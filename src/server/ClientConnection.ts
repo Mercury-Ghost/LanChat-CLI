@@ -170,7 +170,7 @@ export class ClientConnection extends EventEmitter {
     if (this.authenticatedUser) {
       // 先从 UserManager 获取用户信息以确定 activeRoom
       const onlineUser = this.userManager.getUser(this.socketId);
-      
+            
       // 离开当前活动房间（如果不是默认房间）
       if (onlineUser && onlineUser.activeRoom !== this.roomManager.getDefaultRoom()) {
         try {
@@ -179,10 +179,10 @@ export class ClientConnection extends EventEmitter {
           this.logger.debug('离开房间时出错', { socketId: this.socketId, error: e });
         }
       }
-      
+            
       // 从默认房间中移除用户
       this.roomManager.removeFromDefaultRoom(this.authenticatedUser.userId);
-      
+            
       // 从 UserManager 中移除用户
       this.userManager.removeUser(this.socketId);
 

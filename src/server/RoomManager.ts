@@ -125,9 +125,9 @@ export class RoomManager {
   }
 
   /**
-   * 从默认房间中移除用户（用于用户断开连接时的清理）
-   * 与 leaveRoom 不同，此方法专门用于默认房间，不会抛出异常
-   */
+     * 从默认房间中移除用户（用于用户断开连接时的清理）
+     * 与 leaveRoom 不同，此方法专门用于默认房间，不会抛出异常
+     */
   removeFromDefaultRoom(userId: number): void {
     const defaultRoom = this.rooms.get(DEFAULT_ROOM_NAME);
     if (defaultRoom && defaultRoom.has(userId)) {

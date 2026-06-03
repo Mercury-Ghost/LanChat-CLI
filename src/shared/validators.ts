@@ -7,8 +7,8 @@ import {
 } from './constants';
 
 export interface ValidationResult {
-  valid: boolean;
-  error?: string;
+    valid: boolean;
+    error?: string;
 }
 
 const NICKNAME_REGEX = /^[a-zA-Z][a-zA-Z0-9_]*$/;
@@ -156,7 +156,7 @@ export function validateToken(token: string): ValidationResult {
   }
 
   const parts = token.split('.');
-  
+    
   if (parts.length !== 3) {
     return { valid: false, error: 'Token 必须包含三个部分' };
   }
@@ -212,7 +212,7 @@ function isShortenedIPv6(ip: string): boolean {
 
   const parts = ip.split(':');
   let emptyCount = 0;
-  
+    
   for (const part of parts) {
     if (part === '') {
       emptyCount++;
@@ -293,9 +293,9 @@ export function validateFileExtension(filename: string, allowedExtensions: strin
   }
 
   const trimmedFilename = filename.trim();
-  
+    
   const dotIndex = trimmedFilename.lastIndexOf('.');
-  
+    
   if (dotIndex === -1 || dotIndex === 0 || dotIndex === trimmedFilename.length - 1) {
     return { valid: false, error: '文件名必须包含有效的扩展名' };
   }
@@ -327,11 +327,11 @@ export function validateFileExtension(filename: string, allowedExtensions: strin
  * - 至少包含一个特殊字符（非字母数字）
  */
 export interface PasswordStrengthOptions {
-  minLength?: number;
-  requireUppercase?: boolean;
-  requireLowercase?: boolean;
-  requireNumber?: boolean;
-  requireSpecialChar?: boolean;
+    minLength?: number;
+    requireUppercase?: boolean;
+    requireLowercase?: boolean;
+    requireNumber?: boolean;
+    requireSpecialChar?: boolean;
 }
 
 export function validatePasswordStrength(

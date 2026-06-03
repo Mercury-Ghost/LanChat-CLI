@@ -12,14 +12,14 @@ import { MAX_FILE_SIZE, MAX_USER_TRANSFERS, MAX_GLOBAL_TRANSFERS } from '../../s
 import { ValidationError, NotFoundError, ResourceLimitError } from '../../shared/errors';
 
 export interface FileTransferSession {
-  transferId: string;
-  fileName: string;
-  fileSize: number;
-  senderId: number;
-  receiverId?: number;
-  roomId?: number;
-  status: 'pending' | 'accepted' | 'rejected' | 'completed' | 'aborted';
-  startTime: number;
+    transferId: string;
+    fileName: string;
+    fileSize: number;
+    senderId: number;
+    receiverId?: number;
+    roomId?: number;
+    status: 'pending' | 'accepted' | 'rejected' | 'completed' | 'aborted';
+    startTime: number;
 }
 
 export class FileService {

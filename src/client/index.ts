@@ -9,9 +9,9 @@ import { DEFAULT_HOST, DEFAULT_PORT } from '../shared/constants';
 dotenv.config();
 
 interface ClientConfig {
-  host: string;
-  port: number;
-  trustedFingerprints: string[];
+    host: string;
+    port: number;
+    trustedFingerprints: string[];
 }
 
 class LanChatClient {
@@ -94,7 +94,7 @@ class LanChatClient {
 
     console.log('\n⚠️  首次连接此服务器，证书指纹如下：');
     console.log(`   ${fingerprint}`);
-    
+        
     const answer = await this.prompt('是否信任此证书? (y/N)', 'N');
     return answer.toLowerCase() === 'y';
   }
@@ -109,9 +109,9 @@ class LanChatClient {
 
   private prompt(question: string, defaultValue: string): Promise<string> {
     return new Promise((resolve) => {
-      this.rl!.question(`${question} [${defaultValue}]: `, (answer) => {
-        resolve(answer.trim() || defaultValue);
-      });
+            this.rl!.question(`${question} [${defaultValue}]: `, (answer) => {
+              resolve(answer.trim() || defaultValue);
+            });
     });
   }
 
@@ -159,29 +159,29 @@ class LanChatClient {
         console.log(`  ${i + 1}. ${opt}`);
       });
 
-      this.rl!.question('> ', (answer) => {
-        const num = parseInt(answer, 10);
-        if (num >= 1 && num <= options.length) {
-          resolve(num.toString());
-        } else {
-          resolve('1');
-        }
-      });
+            this.rl!.question('> ', (answer) => {
+              const num = parseInt(answer, 10);
+              if (num >= 1 && num <= options.length) {
+                resolve(num.toString());
+              } else {
+                resolve('1');
+              }
+            });
     });
   }
 
   private promptPassword(question: string): Promise<string> {
     return new Promise((resolve) => {
       process.stdout.write(`${question}: `);
-      
+            
       if (process.stdin.isTTY) {
         process.stdin.setRawMode(true);
       }
       process.stdin.resume();
       process.stdin.setEncoding('utf8');
-      
+            
       let password = '';
-      
+            
       const onData = (char: string) => {
         switch (char) {
         case '\n':
@@ -213,7 +213,7 @@ class LanChatClient {
           break;
         }
       };
-      
+            
       process.stdin.on('data', onData);
     });
   }

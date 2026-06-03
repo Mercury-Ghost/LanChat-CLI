@@ -1,32 +1,33 @@
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
 
 interface Config {
-  serverPort: number;
-  defaultHost: string;
-  defaultPort: number;
-  jwtSecret: string;
-  jwtExpiresIn: number;
-  dbPath: string;
-  filesDir: string;
-  certPath: string;
-  keyPath: string;
-  logLevel: string;
-  heartbeatInterval: number;
-  heartbeatTimeout: number;
-  connectionTimeout: number;
-  maxFileSize: number;
-  chunkSize: number;
-  argon2TimeCost: number;
-  argon2MemoryCost: number;
-  argon2Parallelism: number;
-  minNicknameLength: number;
-  maxNicknameLength: number;
-  maxMessageLength: number;
-  maxHistoryCount: number;
-  defaultHistoryCount: number;
-  defaultRoomName: string;
+    serverPort: number;
+    defaultHost: string;
+    defaultPort: number;
+    jwtSecret: string;
+    jwtExpiresIn: number;
+    dbPath: string;
+    filesDir: string;
+    certPath: string;
+    keyPath: string;
+    logLevel: string;
+    heartbeatInterval: number;
+    heartbeatTimeout: number;
+    connectionTimeout: number;
+    maxFileSize: number;
+    chunkSize: number;
+    argon2TimeCost: number;
+    argon2MemoryCost: number;
+    argon2Parallelism: number;
+    minNicknameLength: number;
+    maxNicknameLength: number;
+    maxMessageLength: number;
+    maxHistoryCount: number;
+    defaultHistoryCount: number;
+    defaultRoomName: string;
 }
 
 const defaultConfig: Config = {
@@ -66,7 +67,7 @@ function validateConfig(loadedConfig: Config): void {
   if (isProduction() && !loadedConfig.jwtSecret) {
     throw new Error(
       '生产环境必须设置 JWT_SECRET 环境变量。' +
-      '请设置一个强密钥（至少 32 个字符）。'
+            '请设置一个强密钥（至少 32 个字符）。'
     );
   }
   if (loadedConfig.jwtSecret && loadedConfig.jwtSecret.length < 32) {
@@ -91,7 +92,7 @@ export function loadConfig(envPath?: string): Config {
   }
 
   const jwtSecretFromEnv = getString('JWT_SECRET', '');
-  
+    
   config = {
     serverPort: getNumberWithFallback(['PORT', 'SERVER_PORT'], defaultConfig.serverPort),
     defaultHost: getString('DEFAULT_HOST', defaultConfig.defaultHost),
@@ -125,7 +126,9 @@ export function loadConfig(envPath?: string): Config {
 }
 
 function getDefaultTestJwtSecret(): string {
-  return 'lanchat-test-secret-key-12345';
+  const secret = crypto.randomBytes(32).toString('hex');
+  console.warn('⚠️  开发环境：使用自动生成的临时密钥，生产环境请设置 JWT_SECRET 环境变量');
+  return secret;
 }
 
 function getString(envVar: string, defaultValue: string): string {
