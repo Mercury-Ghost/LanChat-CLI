@@ -2,30 +2,33 @@
   "name": "lanchat",
   "version": "1.0.0",
   "description": "局域网聊天室 CLI 程序 - 基于 TCP 的全屏终端聊天应用",
-  "main": "dist/server/index.js",
+  "main": "dist/server/server/index.js",
   "bin": {
-    "lanchat-server": "dist/server/index.js",
-    "lanchat": "dist/client/index.js"
+    "lanchat-server": "./dist/server/server/index.js",
+    "lanchat-client": "./dist/client/client/index.js"
   },
   "scripts": {
     "build": "tsc",
     "build:server": "tsc -p tsconfig.server.json",
     "build:client": "tsc -p tsconfig.client.json",
-    "start:server": "node dist/server/index.js",
-    "start:client": "node dist/client/index.js",
+    "build:all": "npm run build:server && npm run build:client",
+    "start:server": "node dist/server/server/index.js",
+    "start:client": "node dist/client/client/index.js",
     "dev:server": "ts-node src/server/index.ts",
     "dev:client": "ts-node src/client/index.ts",
     "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "audit": "npm audit",
     "audit:fix": "npm audit fix",
     "security": "npm audit",
-    "pkg:server": "echo \"Skipping pkg due to network issues - building code bundle\"",
-    "pkg:client": "echo \"Skipping pkg due to network issues - building code bundle\"",
+    "clean": "node scripts/clean.js",
+    "pkg:server": "cross-env PKG_EXECPATH=node NODE_TLS_REJECT_UNAUTHORIZED=0 pkg --config package.json --targets node18-win-x64 --output dist/releases/lanchat-server-v1.0.0-win-x64.exe dist/server/server/index.js",
+    "pkg:client": "cross-env PKG_EXECPATH=node NODE_TLS_REJECT_UNAUTHORIZED=0 pkg --config package.json --targets node18-win-x64 --output dist/releases/lanchat-client-v1.0.0-win-x64.exe dist/client/client/index.js",
     "pack:dist": "node scripts/package-dist.js",
-    "build:dist": "npm run build:server && npm run build:client && npm run test && npm run pkg:server && npm run pkg:client && npm run pack:dist"
+    "package": "npm run build:all && npm run pkg:server && npm run pkg:client && npm run pack:dist"
   },
   "keywords": [
     "chatroom",
@@ -40,7 +43,7 @@
     "blessed": "^0.1.81",
     "dotenv": "^16.4.5",
     "jsonwebtoken": "^9.0.2",
-    "uuid": "^14.0.0",
+    "uuid": "^9.0.0",
     "winston": "^3.11.0"
   },
   "optionalDependencies": {
@@ -58,13 +61,36 @@
     "@typescript-eslint/parser": "^7.1.0",
     "adm-zip": "^0.5.17",
     "archiver": "^8.0.0",
+    "cross-env": "^7.0.3",
     "eslint": "^8.57.0",
     "jest": "^30.4.2",
+    "nexe": "^5.0.0-beta.4",
     "pkg": "^5.8.1",
     "ts-jest": "^29.4.11",
     "typescript": "^5.4.2"
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "pkg": {
+    "scripts": [
+      "dist/server/src/**/*.js",
+      "dist/client/src/**/*.js",
+      "dist/client/client/**/*.js",
+      "dist/shared/**/*.js"
+    ],
+    "assets": [
+      "node_modules/blessed/**/*",
+      "node_modules/uuid/**/*",
+      "node_modules/dotenv/**/*",
+      "node_modules/winston/**/*",
+      "node_modules/jsonwebtoken/**/*",
+      "node_modules/argon2/**/*",
+      "node_modules/better-sqlite3/**/*"
+    ],
+    "targets": [
+      "node18-win-x64"
+    ],
+    "outputPath": "dist/releases"
   }
 }
