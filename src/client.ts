@@ -36,8 +36,8 @@ import {
 
 import { encodeMessage, parseMessages } from './shared/utils';
 
-const HOST = process.env.CHAT_CLIENT_HOST || '47.95.232.197';
-const PORT = parseInt(process.env.CHAT_CLIENT_PORT || '3001', 10);
+const HOST = process.env.DEFAULT_HOST || '47.95.232.197'; 
+const PORT = parseInt(process.env.DEFAULT_PORT || '3001', 10);
 const USE_TLS = process.env.USE_TLS === 'true';
 const STORE_DIR = path.join(os.homedir(), '.lanchat');
 

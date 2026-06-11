@@ -56,7 +56,7 @@ import {
   getMessageTypeName,
 } from './shared/utils';
 
-const PORT = parseInt(process.env.CHAT_CLIENT_PORT || '3001', 10);
+const PORT = parseInt(process.env.DEFAULT_PORT || '3001', 10);
 const JWT_SECRET = process.env.JWT_SECRET || '';
 const DB_PATH = process.env.DB_PATH || 'data/lanchat.db';
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
