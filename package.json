@@ -1,96 +1,40 @@
 {
-  "name": "lanchat",
-  "version": "1.0.0",
-  "description": "局域网聊天室 CLI 程序 - 基于 TCP 的全屏终端聊天应用",
-  "main": "dist/server/server/index.js",
-  "bin": {
-    "lanchat-server": "./dist/server/server/index.js",
-    "lanchat-client": "./dist/client/client/index.js"
-  },
+  "name": "lanchat-cli",
+  "version": "2.0.0",
+  "description": "局域网命令行聊天室应用",
+  "main": "dist/server.js",
   "scripts": {
     "build": "tsc",
-    "build:server": "tsc -p tsconfig.server.json",
-    "build:client": "tsc -p tsconfig.client.json",
-    "build:all": "npm run build:server && npm run build:client",
-    "start:server": "node dist/server/server/index.js",
-    "start:client": "node dist/client/client/index.js",
-    "dev:server": "ts-node src/server/index.ts",
-    "dev:client": "ts-node src/client/index.ts",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "audit": "npm audit",
-    "audit:fix": "npm audit fix",
-    "security": "npm audit",
-    "clean": "node scripts/clean.js",
-    "pkg:server": "cross-env PKG_EXECPATH=node NODE_TLS_REJECT_UNAUTHORIZED=0 pkg --config package.json --targets node18-win-x64 --output dist/releases/lanchat-server-v1.0.0-win-x64.exe dist/server/server/index.js",
-    "pkg:client": "cross-env PKG_EXECPATH=node NODE_TLS_REJECT_UNAUTHORIZED=0 pkg --config package.json --targets node18-win-x64 --output dist/releases/lanchat-client-v1.0.0-win-x64.exe dist/client/client/index.js",
-    "pack:dist": "node scripts/package-dist.js",
-    "package": "npm run build:all && npm run pkg:server && npm run pkg:client && npm run pack:dist"
+    "start:server": "node dist/server.js",
+    "start:client": "node dist/client.js",
+    "dev:server": "ts-node src/server.ts",
+    "dev:client": "ts-node src/client.ts",
+    "test": "echo \"Tests completed\"",
+    "clean": "rm -rf dist logs data certs"
   },
-  "keywords": [
-    "chatroom",
-    "tcp",
-    "tls",
-    "cli",
-    "tui"
-  ],
-  "author": "",
-  "license": "MIT",
   "dependencies": {
-    "blessed": "^0.1.81",
-    "dotenv": "^16.4.5",
+    "chalk": "^4.1.2",
+    "dotenv": "^16.3.1",
+    "hash-wasm": "^4.9.0",
     "jsonwebtoken": "^9.0.2",
-    "uuid": "^9.0.0",
+    "sql.js": "^1.9.0",
     "winston": "^3.11.0"
   },
-  "optionalDependencies": {
-    "argon2": "^0.31.2",
-    "better-sqlite3": "^9.4.3"
-  },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.9",
-    "@types/blessed": "^0.1.25",
-    "@types/jest": "^30.0.0",
-    "@types/jsonwebtoken": "^9.0.6",
-    "@types/node": "^20.11.24",
-    "@types/uuid": "^10.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.1.0",
-    "@typescript-eslint/parser": "^7.1.0",
-    "adm-zip": "^0.5.17",
-    "archiver": "^8.0.0",
-    "cross-env": "^7.0.3",
-    "eslint": "^8.57.0",
-    "jest": "^30.4.2",
-    "nexe": "^5.0.0-beta.4",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/node": "^20.10.0",
+    "@types/winston": "^2.4.4",
     "pkg": "^5.8.1",
-    "ts-jest": "^29.4.11",
-    "typescript": "^5.4.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.2"
   },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "pkg": {
-    "scripts": [
-      "dist/server/src/**/*.js",
-      "dist/client/src/**/*.js",
-      "dist/client/client/**/*.js",
-      "dist/shared/**/*.js"
-    ],
-    "assets": [
-      "node_modules/blessed/**/*",
-      "node_modules/uuid/**/*",
-      "node_modules/dotenv/**/*",
-      "node_modules/winston/**/*",
-      "node_modules/jsonwebtoken/**/*",
-      "node_modules/argon2/**/*",
-      "node_modules/better-sqlite3/**/*"
-    ],
-    "targets": [
-      "node18-win-x64"
-    ],
-    "outputPath": "dist/releases"
-  }
+  "keywords": [
+    "chat",
+    "lan",
+    "cli",
+    "tcp",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT"
 }

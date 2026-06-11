@@ -1,211 +1,229 @@
-# LanChat CLI
+# 局域网命令行聊天室 (LAN Chat CLI)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-green.svg)](https://nodejs.org/)
-
-基于 TCP/TLS 的局域网聊天室终端应用，提供安全、高效的即时通信体验。
-
----
+一个基于 Node.js 和 TypeScript 开发的局域网命令行聊天室应用，支持 TCP 协议通信、用户认证、房间管理、私聊等功能。
 
 ## 功能特性
 
-### 安全通信
-- TLS 1.2/1.3 加密通信信道
-- 自签名 X.509 证书支持
-- Argon2id 密码哈希存储
-- JWT 令牌身份认证
+### 核心功能
+- ✅ **用户认证**: 支持注册、登录、Token 自动登录
+- ✅ **房间管理**: 创建房间、加入/离开房间、房间列表
+- ✅ **消息通信**: 群聊消息、私聊消息、系统消息
+- ✅ **历史记录**: 查看房间历史消息、私聊历史消息
 
-### 聊天功能
-- 房间群聊与点对点私聊
-- 实时在线用户列表
-- 消息历史记录
-- 用户昵称修改
+### 安全特性
+- ✅ **密码验证**: 密码强度校验（大写、小写、数字、长度8-20位）
+- ✅ **Token 管理**: JWT 令牌机制、令牌刷新、令牌注销
+- ✅ **数据加密**: TLS 加密传输支持
+- ✅ **日志系统**: 分级日志、日志轮转、错误追踪
 
-### 文件传输
-- 服务器中转模式
-- 支持大文件传输（最大 500 MB）
-- 断点续传功能
-- 传输进度显示
+### 用户体验
+- ✅ **全屏刷新界面**: 模拟聊天软件的终端显示效果
+- ✅ **自动重连**: 断线自动重连机制
+- ✅ **心跳检测**: 连接状态实时监控
 
-### 终端界面
-- 基于 blessed 的全屏 TUI
-- 多区域布局（聊天窗口、用户列表、状态栏）
-- 键盘快捷键支持
-- 彩色消息渲染
+## 技术栈
 
-### 连接可靠性
-- 心跳检测机制（15 秒间隔）
-- 超时自动断开与重连
-- 断线自动重连（指数退避策略）
-
----
+- **语言**: TypeScript 5.x
+- **运行时**: Node.js 20.x
+- **数据库**: SQLite (sql.js)
+- **加密**: Argon2id (密码哈希)、JWT (认证令牌)
+- **日志**: Winston
+- **TCP 通信**: Node.js net 模块
 
 ## 快速开始
 
 ### 环境要求
-- Node.js 18.0.0+（LTS 版本推荐）
-- Windows 10+ / macOS 10.14+ / Linux
 
-### 安装步骤
+- Node.js >= 20.0.0
+- npm >= 10.0.0
+
+### 安装依赖
 
 ```bash
-# 1. 安装依赖
 npm install
+```
 
-# 2. 生成 TLS 证书（首次运行自动生成）
+### 构建项目
 
-# 3. 编译项目
+```bash
 npm run build
+```
 
-# 4. 启动服务端
+### 运行服务端
+
+```bash
+# 开发模式
+npm run dev:server
+
+# 生产模式
 npm run start:server
+```
 
-# 5. 启动客户端（新终端）
+### 运行客户端
+
+```bash
+# 开发模式
+npm run dev:client
+
+# 生产模式
 npm run start:client
 ```
 
-### 开发模式
+## 配置说明
 
-```bash
-# 开发模式运行服务端
-npm run dev:server
+创建 `.env` 文件配置应用：
 
-# 开发模式运行客户端
-npm run dev:client
+```env
+# 服务端端口
+PORT=9527
 
-# 类型检查
-npm run lint
+# JWT 密钥（必须设置）
+JWT_SECRET=your-secret-key-here
+
+# 数据库路径
+DB_PATH=data/lanchat.db
+
+# 日志级别
+LOG_LEVEL=info
+
+# 是否启用 TLS
+USE_TLS=false
+TLS_CERT_PATH=certs/server.crt
+TLS_KEY_PATH=certs/server.key
 ```
 
----
+**注意**: `JWT_SECRET` 必须设置为一个安全的随机字符串，建议至少32位字符。
 
-## 常用命令
+## 命令说明
 
-在聊天界面中输入以下命令：
-
-| 命令 | 说明 |
-|------|------|
-| `/join #<room>` | 加入或创建房间 |
-| `/leave` | 离开当前房间 |
-| `/rooms` | 列出所有房间 |
-| `/msg <nick> <message>` | 发送私聊消息 |
-| `/nick <newNick>` | 修改昵称 |
-| `/list` | 刷新用户列表 |
-| `/history [count]` | 拉取历史消息 |
-| `/sendfile <nick> <path>` | 发送文件 |
-| `/passwd <old> <new>` | 修改密码 |
-| `/quit` | 退出程序 |
-| `/help` | 显示帮助 |
-
----
+| 命令 | 说明 | 示例 |
+|------|------|------|
+| `/join #房间名` | 加入指定房间 | `/join #general` |
+| `/leave` | 离开当前房间 | `/leave` |
+| `/rooms` | 列出所有房间 | `/rooms` |
+| `/msg <昵称> <消息>` | 发送私聊消息 | `/msg Alice Hello!` |
+| `/nick <新昵称>` | 修改昵称 | `/nick NewName` |
+| `/list` | 列出当前房间在线用户 | `/list` |
+| `/history [@昵称] [数量]` | 查看历史消息 | `/history 50` 或 `/history @Alice 20` |
+| `/passwd` | 修改密码 | `/passwd` |
+| `/quit` | 退出聊天室 | `/quit` |
+| `/help` | 显示帮助信息 | `/help` |
 
 ## 项目结构
 
 ```
-src/
-├── shared/          # 共享模块
-│   ├── protocol/    # 协议定义
-│   ├── config.ts    # 配置管理
-│   ├── certificate.ts # TLS 证书生成
-│   ├── constants.ts # 常量配置
-│   ├── errors.ts    # 错误定义
-│   └── validators.ts # 输入校验
-├── server/          # 服务端
-│   ├── repositories/ # 数据访问层
-│   ├── services/    # 业务逻辑层
-│   └── *.ts         # 核心服务模块
-└── client/          # 客户端
-    ├── components/  # TUI 组件
-    └── *.ts         # 核心客户端模块
+lanchat-cli/
+├── src/
+│   ├── server.ts          # 服务端主入口
+│   ├── client.ts          # 客户端主入口
+│   ├── shared/
+│   │   ├── types.ts       # TypeScript 类型定义
+│   │   ├── utils.ts       # 工具函数
+│   │   └── wasm-data.ts   # sql.js WASM 数据
+│   └── sqljs.d.ts         # sql.js 类型声明
+├── dist/                  # 编译输出目录
+├── data/                  # 数据库文件目录
+├── logs/                  # 日志文件目录
+├── certs/                 # TLS 证书目录
+├── .env                   # 环境配置文件
+├── package.json           # 项目配置
+├── tsconfig.json          # TypeScript 配置
+└── README.md              # 项目文档
 ```
 
----
+## 协议说明
 
-## 配置说明
+### 消息格式
 
-### 环境变量
+应用使用自定义的二进制协议进行通信：
 
-| 环境变量 | 默认值 | 说明 |
-|----------|--------|------|
-| SERVER_PORT | 9527 | 服务端口 |
-| DB_PATH | ./data/lanchat.db | 数据库路径 |
-| FILES_DIR | ./files | 文件存储目录 |
-| CERT_PATH | ./certs/server.crt | TLS 证书路径 |
-| KEY_PATH | ./certs/server.key | TLS 私钥路径 |
-| JWT_SECRET | - | JWT 密钥（必填） |
-
-### .env 文件示例
-
-```env
-SERVER_PORT=9527
-JWT_SECRET=your-strong-secret-key-here-min-32-characters
-DB_PATH=./data/lanchat.db
+```
++----------------+----------------+----------------+
+| 类型 (1字节)   | 长度 (4字节)   | 数据 (N字节)   |
++----------------+----------------+----------------+
 ```
 
----
+### 消息类型
 
-## 文档
+| 类型 | 值 | 说明 |
+|------|-----|------|
+| LOGIN_REQUEST | 0x01 | 登录请求 |
+| LOGIN_RESPONSE | 0x02 | 登录响应 |
+| REGISTER_REQUEST | 0x03 | 注册请求 |
+| REGISTER_RESPONSE | 0x04 | 注册响应 |
+| TOKEN_LOGIN_REQUEST | 0x09 | Token 登录请求 |
+| TOKEN_LOGIN_RESPONSE | 0x0A | Token 登录响应 |
+| TOKEN_REFRESH_REQUEST | 0x0B | Token 刷新请求 |
+| TOKEN_REFRESH_RESPONSE | 0x0C | Token 刷新响应 |
+| ROOM_JOIN_REQUEST | 0x14 | 加入房间请求 |
+| ROOM_JOIN_RESPONSE | 0x15 | 加入房间响应 |
+| CHAT_ROOM_MESSAGE | 0x20 | 群聊消息 |
+| CHAT_PRIVATE_MESSAGE | 0x21 | 私聊消息 |
 
-完整文档位于 `docs/` 目录：
+## 安全说明
 
-- [docs/architecture.md](docs/architecture.md) - 系统架构说明
-- [docs/protocol.md](docs/protocol.md) - 通信协议规范
-- [docs/deployment.md](docs/deployment.md) - 部署指南
-- [docs/api/client-api.md](docs/api/client-api.md) - 客户端 API
-- [docs/api/server-api.md](docs/api/server-api.md) - 服务端 API
-- [docs/api/shared-api.md](docs/api/shared-api.md) - 共享模块 API
+### 密码策略
 
----
+- 密码长度必须在 8-20 个字符之间
+- 必须包含至少一个大写字母
+- 必须包含至少一个小写字母
+- 必须包含至少一个数字
 
-## 生产部署
+### Token 机制
 
-请参考 [部署指南](docs/deployment.md)。
+- Token 有效期为 24 小时
+- 支持 Token 刷新（有效期不足时）
+- 支持 Token 注销（加入黑名单）
+- 黑名单自动清理（Token 过期后自动移除）
 
-### 安全要点
-1. 使用专用用户运行服务，不要使用 root
-2. 配置强 JWT_SECRET（至少 32 字符）
-3. 使用受信任的 TLS 证书
-4. 设置正确的文件权限（私钥为 600）
-5. 配置自动重启（systemd 或 PM2）
-6. 设置定期备份
+### 日志策略
 
----
+- 正常日志仅写入文件，不输出到终端
+- 错误日志同时输出到终端和文件
+- 日志文件最大 10MB，保留最近 5 个文件
+- 错误日志最大 5MB，保留最近 3 个文件
 
-## 构建发布包
+## 开发指南
+
+### 启动开发环境
 
 ```bash
-# 构建完整分发包
-npm run build:dist
+# 启动服务端（开发模式）
+npm run dev:server
 
-# 生成的文件位于 dist/ 目录
-# - lanchat-server-bundle.zip
-# - lanchat-client-bundle.zip
+# 在另一个终端启动客户端
+npm run dev:client
 ```
 
----
+### 构建生产版本
 
-## 贡献指南
+```bash
+npm run build
+```
 
-欢迎贡献代码！请参阅 [CONTRIBUTING.md](CONTRIBUTING.md)。
+### 清理项目
 
----
+```bash
+npm run clean
+```
 
 ## 许可证
 
-MIT License - 详见 [LICENSE](LICENSE)
+MIT License
 
----
+## 贡献
 
-## 安全注意事项
+欢迎提交 Issue 和 Pull Request！
 
-- **证书安全**：`certs/server.key` 私钥文件严禁提交到版本库
-- **配置安全**：`.env` 文件包含敏感配置，已在 `.gitignore` 中排除
-- **生产部署**：生产环境务必使用内部 CA 或受信任机构签发的正式证书
-- **JWT 密钥**：`JWT_SECRET` 必须设置为强随机密钥，严禁使用默认值
+## 更新日志
 
----
+### v2.0.0
 
-**作者**: Mercury-Ghost  
-**邮箱**: sbc0124@outlook.com  
-**项目地址**: [https://github.com/Mercury-Ghost/LanChat-CLI](https://github.com/Mercury-Ghost/LanChat-CLI)
+- 重构为 TypeScript
+- 新增 Token 管理机制
+- 新增密码强度验证
+- 新增全屏刷新终端界面
+- 新增日志分级系统
+- 支持 TLS 加密传输
+- 新增心跳检测机制
+- 优化断线重连逻辑

@@ -1,6 +1,0 @@
-# 此目录用于存放 TLS 证书
-# 请运行以下命令生成证书：
-#
-# openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout server.key -out server.crt -subj "/CN=LanChat"
-#
-# 注意：server.key 私钥文件不会被提交到 Git

@@ -1,13 +1,43 @@
+# Dependencies
 node_modules/
-dist/
-*.log
-.env
-data/
-logs/
-*.tsbuildinfo
-.DS_Store
-*.db-shm
-*.db-wal
 
-# 证书私钥
-certs/server.key
+# Build output
+dist/
+build/
+*.log
+
+# Database
+data/
+*.db
+*.sqlite
+
+# Logs
+logs/
+*.log
+
+# TLS certificates
+certs/
+*.crt
+*.key
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Package artifacts
+*.exe
+*.pkg
+
+# TypeScript cache
+*.tsbuildinfo
